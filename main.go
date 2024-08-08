@@ -9,7 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	//github "github.com/JackBekket/Reflexia/localgithub"
+	//github "github.com/jackbekket/Reflexia/localgithub"
+	github "./lib"
 	"github.com/joho/godotenv"
 )
 
@@ -30,7 +31,7 @@ func main() {
     }
 
     os.Mkdir("temp", os.ModePerm)
-	//github.Clone(repoLink,"/temp/")
+	github.Clone(repoLink,"/temp/")
     cmd := exec.Command("git", "clone", repoLink, "temp")
     err = cmd.Run()
     if err != nil {
