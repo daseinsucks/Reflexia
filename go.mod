@@ -1,4 +1,4 @@
-module github.com/jackbekket/reflexia
+module github.com/jackbekket/Reflexia
 
 go 1.22.0
 
