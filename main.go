@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	github "github.com/JackBekket/Reflexia/lib/github"
@@ -32,11 +31,13 @@ func main() {
 
     os.Mkdir("temp", os.ModePerm)
 	github.Clone(repoLink,"/temp/")
+    /*
     cmd := exec.Command("git", "clone", repoLink, "temp")
     err = cmd.Run()
     if err != nil {
         log.Fatalf("Error cloning repository: %s", err)
     }
+    */
 
     pkgs := make(map[string]*Package)
 
