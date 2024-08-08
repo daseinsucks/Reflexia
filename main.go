@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	github "github.com/JackBekket/Reflexia/localgithub"
+	github "github.com/JackBekket/Reflexia/lib/github"
 	//github "./lib"
 	"github.com/joho/godotenv"
 )

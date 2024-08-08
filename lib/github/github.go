@@ -1,4 +1,4 @@
-package localgithub
+package github
 
 import (
 	"fmt"
