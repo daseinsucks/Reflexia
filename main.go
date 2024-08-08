@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	gh "github.com/JackBekket/Reflexia/github"
 	"github.com/joho/godotenv"
 )
 
@@ -29,6 +30,7 @@ func main() {
     }
 
     os.Mkdir("temp", os.ModePerm)
+	gh.Clone(repoLink,"/temp/")
     cmd := exec.Command("git", "clone", repoLink, "temp")
     err = cmd.Run()
     if err != nil {
