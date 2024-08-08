@@ -8,14 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Package struct {
-    Name    string
-    Files   []string
+    Name  string
+    Files []string
 }
 
 func main() {
@@ -45,13 +44,11 @@ func main() {
             if err != nil {
                 return err
             }
-            for _, imp := range f.Imports {
-                pkgName := strings.Replace(imp.Path.Value, "\"", "", -1)
-                if _, ok := pkgs[pkgName]; !ok {
-                    pkgs[pkgName] = &Package{Name: pkgName, Files: []string{}}
-                }
-                pkgs[pkgName].Files = append(pkgs[pkgName].Files, path)
+            pkgName := f.Name.Name
+            if _, ok := pkgs[pkgName]; !ok {
+                pkgs[pkgName] = &Package{Name: pkgName, Files: []string{}}
             }
+            pkgs[pkgName].Files = append(pkgs[pkgName].Files, path)
         }
         return nil
     })
