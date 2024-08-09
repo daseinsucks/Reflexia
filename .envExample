@@ -1,0 +1,4 @@
+REPO_LINK=https://github.com/JackBekket/Reflexia.git
+AI_URL=""
+API_TOKEN="xxxxxxxx"
+MODEL="deepseek-coder-6b-instruct"

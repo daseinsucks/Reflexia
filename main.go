@@ -10,6 +10,7 @@ import (
 
 	ai "github.com/JackBekket/Reflexia/lib/ai"
 	github "github.com/JackBekket/Reflexia/lib/github"
+	"github.com/go-git/go-git/v5"
 
 	//github "./lib"
 	"github.com/joho/godotenv"
@@ -18,6 +19,7 @@ import (
 type Package struct {
     Name  string
     Files []string
+    Repo *git.Repository
 }
 
 func main() {
@@ -31,8 +33,18 @@ func main() {
         log.Fatal("REPO_LINK is not set in .env")
     }
 
-    os.Mkdir("temp", os.ModePerm)
-	github.Clone(repoLink,"/temp/")
+    perm := os.FileMode(0755) // 0755 is the common permission for directories
+
+    err = os.Mkdir("temp", perm)
+    if err != nil {
+        fmt.Println("Error creating directory:", err)
+        //return
+    }
+	r, err := github.Clone(repoLink,"./temp/")
+    if err != nil {
+        log.Fatal("error", err)
+    }
+    log.Println("repo :",r)
     
     /*
     cmd := exec.Command("git", "clone", repoLink, "temp")

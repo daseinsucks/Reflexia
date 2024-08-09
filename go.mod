@@ -5,13 +5,13 @@ go 1.22.3
 toolchain go1.22.6
 
 require (
+	github.com/JackBekket/hellper v0.0.0-20240808144902-d4a44b4b003e
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/joho/godotenv v1.5.1
 )
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
-	github.com/JackBekket/hellper v0.0.0-20240808144902-d4a44b4b003e // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
