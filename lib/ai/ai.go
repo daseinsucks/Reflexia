@@ -42,7 +42,7 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
         log.Fatal(err)
     }
 
-    println(content)
+    //println(content)
 
 	return content
 }
@@ -73,6 +73,39 @@ func TestGenerateContent(initial_promt string) (string){
 
 	return summary
 }
+
+func GetSummaryPackage(initial_promt string) (string) {
+	res := TestGenerateContent(initial_promt)
+	return res
+}
+
+
+func CreateDoc(code string) (string) {
+	aiLink := os.Getenv("AI_URL")
+    if aiLink == "" {
+        log.Fatal("AI_LINK is not set in .env")
+    }
+
+	model := os.Getenv("MODEL")
+	if model =="" {
+		log.Fatal("MODEL IS NOT SET")
+	}
+
+	api_token := os.Getenv("API_TOKEN")
+	if api_token == "" {
+		log.Fatal("API_TOKEN is not set")
+	}
+
+	request := GenerateDocumentationPromt(code)
+
+	network := "local"
+
+	documentation := GenerateContent(aiLink,request,model,api_token,network)
+
+
+	return documentation
+}
+
 
 
 func getEnv() {
