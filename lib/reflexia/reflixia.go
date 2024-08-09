@@ -90,6 +90,7 @@ func Reflexate(repo_url string) {
 				ai.CreateDoc(string(content))
 			} else {
 				ai.TestGenerateContent(string(content))
+				//ai.CreateDoc(string(content))
 			}
 		}
 	}

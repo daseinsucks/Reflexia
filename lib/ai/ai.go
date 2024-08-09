@@ -9,7 +9,7 @@ import (
 )
 
 
- var sum_instruction_pkg = "Make a summary for next code package: "
+ var sum_instruction_pkg = "Make a summary for this code: "
  var sum_escape = "```"
 
  var doc_instruction = "Make a documentation for this code: "
