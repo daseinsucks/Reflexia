@@ -6,10 +6,11 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
+	ai "github.com/JackBekket/Reflexia/lib/ai"
 	github "github.com/JackBekket/Reflexia/lib/github"
+
 	//github "./lib"
 	"github.com/joho/godotenv"
 )
@@ -33,13 +34,13 @@ func main() {
     os.Mkdir("temp", os.ModePerm)
 	github.Clone(repoLink,"/temp/")
     
+    /*
     cmd := exec.Command("git", "clone", repoLink, "temp")
     err = cmd.Run()
     if err != nil {
         log.Fatalf("Error cloning repository: %s", err)
     }
-    
-
+    */
     pkgs := make(map[string]*Package)
 
     err = filepath.Walk("temp", func(path string, info os.FileInfo, err error) error {
@@ -63,9 +64,19 @@ func main() {
 
     for _, pkg := range pkgs {
         fmt.Printf("Package: %s\n", pkg.Name)
+
         for _, file := range pkg.Files {
             fmt.Printf("  File: %s\n", file)
+
+            content, err := os.ReadFile(file)
+
+            if err != nil {
+                log.Fatalf("Error reading file: %s", err)
+            }
+
+            ai.TestGenerateContent(string(content))
         }
     }
+    
     os.RemoveAll("temp")
 }
