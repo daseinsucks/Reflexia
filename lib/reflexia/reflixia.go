@@ -75,7 +75,23 @@ func Reflexate(repo_url string) {
     }
 
     for _, pkg := range pkgs {
-		fmt.Printf("Package: %s\n", pkg.Name)
+        fmt.Printf("Package: %s\n", pkg.Name)
+
+        readme_file, err := os.Create(fmt.Sprintf("%s.md", pkg.Name))
+        if err != nil  {
+            fmt.Printf("Error creating .md file for package %s: %s\n", pkg.Name, err)
+            return
+         }
+        defer readme_file.Close()
+
+        _, err = readme_file.WriteString(fmt.Sprintf("# %s\n\n", pkg.Name))
+        if err != nil  {
+            fmt.Printf("Error writing to .md file for package %s: %s\n", pkg.Name, err)
+            return
+        }
+
+        var doc_content string
+        var summary_content string
 	
 		for _, file := range pkg.Files {
 			fmt.Printf("  File: %s\n", file)
@@ -87,11 +103,23 @@ func Reflexate(repo_url string) {
 			}
 	
 			if filepath.Base(file) == "main.go" {
-				ai.CreateDoc(string(content))
+                doc_content = ai.CreateDoc(string(content))
+
+                _, err = readme_file.WriteString(fmt.Sprintf("## Documentation\n\n%s\n\n", doc_content))
+                if err != nil  {
+                    fmt.Printf("Error writing to .md file for package %s: %s\n", pkg.Name, err)
+                    return
+                }
 			} else {
-				ai.TestGenerateContent(string(content))
+				summary_content = ai.TestGenerateContent(string(content))
 				//ai.CreateDoc(string(content))
+                _, err = readme_file.WriteString(fmt.Sprintf("## Summary\n\n%s\n\n", summary_content))
+                if err != nil  {
+                    fmt.Printf("Error writing to .md file for package %s: %s\n", pkg.Name, err)
+                    return
+                }
 			}
+
 		}
 	}
     
