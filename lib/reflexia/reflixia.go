@@ -75,20 +75,24 @@ func Reflexate(repo_url string) {
     }
 
     for _, pkg := range pkgs {
-        fmt.Printf("Package: %s\n", pkg.Name)
-
-        for _, file := range pkg.Files {
-            fmt.Printf("  File: %s\n", file)
-
-            content, err := os.ReadFile(file)
-
-            if err != nil {
-                log.Fatalf("Error reading file: %s", err)
-            }
-
-            ai.TestGenerateContent(string(content))
-        }
-    }
+		fmt.Printf("Package: %s\n", pkg.Name)
+	
+		for _, file := range pkg.Files {
+			fmt.Printf("  File: %s\n", file)
+	
+			content, err := os.ReadFile(file)
+	
+			if err != nil {
+				log.Fatalf("Error reading file: %s", err)
+			}
+	
+			if filepath.Base(file) == "main.go" {
+				ai.CreateDoc(string(content))
+			} else {
+				ai.TestGenerateContent(string(content))
+			}
+		}
+	}
     
     os.RemoveAll("temp")
 }
