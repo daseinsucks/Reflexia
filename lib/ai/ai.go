@@ -12,7 +12,7 @@ import (
 
  var sum_instruction_pkg = "Make a summary for this code: "
  var sum_escape = "```"
- var escape = "`"
+ var escape_string = "`"
 
  var doc_instruction = "Make a documentation for this code: "
  var doc_func_instruction = "Refactor this code, add commentaries about this function algorithm: "
@@ -21,12 +21,12 @@ import (
 
 
 func GenerateFunctionPromt(code string) (string){
-	result := doc_func_instruction + escape + code + escape
+	result := doc_func_instruction + sum_escape + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateSummaryPromt(code string) (string) {
-	result := sum_instruction_pkg + sum_escape + code + sum_escape
+	result := sum_instruction_pkg + sum_escape + code + "\n" + sum_escape
 	return result
 }
 
@@ -47,8 +47,7 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
 	*/
 
 	   //llm_stuff
-	   options := 
-	   llm.WithRepetitionPenalty(0.6)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+	   options := llm.WithRepetitionPenalty(0.8)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
 
 
 
