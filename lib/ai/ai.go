@@ -11,10 +11,18 @@ import (
 
  var sum_instruction_pkg = "Make a summary for this code: "
  var sum_escape = "```"
+ var escape = "`"
 
  var doc_instruction = "Make a documentation for this code: "
+ var doc_func_instruction = "Refactor this code, add commentaries about this function algorithm: "
 
 
+
+
+func GenerateCommentForFunction(code string) (string){
+	result := doc_func_instruction + escape + code + escape
+	return result
+}
 
 func GenerateSummaryPromt(code string) (string) {
 	result := sum_instruction_pkg + sum_escape + code + sum_escape
