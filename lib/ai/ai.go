@@ -6,6 +6,7 @@ import (
 
 	helper "github.com/JackBekket/hellper/lib/langchain"
 	"github.com/joho/godotenv"
+	llm "github.com/tmc/langchaingo/llms"
 )
 
 
@@ -35,7 +36,7 @@ func GenerateDocumentationPromt(code string) (string) {
 }
 
 
-func GenerateContent (base_url string, promt string, model_name string, api_token string, network string) (string){
+func GenerateContent (base_url string, promt string, model_name string, api_token string, network string,) (string){    //options ...llms.CallOption
 
 	/*
 	base_url := "http://example.com"
@@ -45,7 +46,13 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
     network := "mainnet"
 	*/
 
-	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network)
+	   //llm_stuff
+	   options := 
+	   llm.WithRepetitionPenalty(0.6)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+
+
+
+	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options)
     if err != nil {
         log.Fatal(err)
     }

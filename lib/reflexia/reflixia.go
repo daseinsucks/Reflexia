@@ -38,6 +38,17 @@ func Reflexate(repo_url string) {
         log.Fatal("REPO_LINK is not set in .env")
     }
 
+
+    /*
+    //llm_stuff
+    options := 
+        llm.WithRepetitionPenalty(0.6)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+    */
+
+
+
+
+
     perm := os.FileMode(0755) // 0755 is the common permission for directories
 
     err = os.Mkdir("temp", perm)
@@ -176,7 +187,7 @@ func Reflexate(repo_url string) {
                 // Call ai.GenerateCommentForFunction with the function declaration
                 comment := ai.GenerateCommentForFunction(funcDecl)
                 fmt.Println("Comment:", comment)
-                _, err = readme_file.WriteString(fmt.Sprintf("## Summary\n\n%s\n\n", comment))
+                _, err = readme_file.WriteString(fmt.Sprintf("## Comment's for functions \n\n%s\n\n", comment))
                 if err != nil  {
                     fmt.Printf("Error writing to .md file for function %s: %s\n", pkg.Name, err)
                 }
