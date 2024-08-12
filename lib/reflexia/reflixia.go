@@ -221,7 +221,7 @@ func Reflexate(repo_url string) {
 
 	}
     
-    //os.RemoveAll("temp")
+    os.RemoveAll("temp")
 }
 
 
