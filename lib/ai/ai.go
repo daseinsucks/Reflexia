@@ -19,7 +19,7 @@ import (
 
 
 
-func GenerateCommentForFunction(code string) (string){
+func GenerateFunctionPromt(code string) (string){
 	result := doc_func_instruction + escape + code + escape
 	return result
 }
@@ -112,6 +112,28 @@ func CreateDoc(code string) (string) {
 
 
 	return documentation
+}
+
+func GenerateCommentForFunction(code string) (string) {
+	aiLink := os.Getenv("AI_URL")
+    if aiLink == "" {
+        log.Fatal("AI_LINK is not set in .env")
+    }
+
+	model := os.Getenv("MODEL")
+	if model =="" {
+		log.Fatal("MODEL IS NOT SET")
+	}
+
+	api_token := os.Getenv("API_TOKEN")
+	if api_token == "" {
+		log.Fatal("API_TOKEN is not set")
+	}
+	network := "local"
+
+	req := GenerateFunctionPromt(code)
+	response := GenerateContent(aiLink,req,model,api_token,network)
+	return response
 }
 
 
