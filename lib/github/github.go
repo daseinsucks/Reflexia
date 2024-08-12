@@ -38,9 +38,9 @@ import (
     })
     if err != nil {
         return err
+    } else {
+        return nil
     }
-
-    return nil
 }
 
 
@@ -62,9 +62,10 @@ func Push(r *git.Repository, branch string) error {
     err := r.Push(pushOptions)
     if err != nil {
         return err
-    }
+    } else {
 
     return nil
+    }
 }
 
 

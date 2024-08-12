@@ -176,7 +176,7 @@ func Reflexate(repo_url string) {
                 // Call ai.GenerateCommentForFunction with the function declaration
                 comment := ai.GenerateCommentForFunction(funcDecl)
                 fmt.Println("Comment:", comment)
-                _, err = readme_file.WriteString(fmt.Sprintf("## Summary\n\n%s\n\n", summary_content))
+                _, err = readme_file.WriteString(fmt.Sprintf("## Summary\n\n%s\n\n", comment))
                 if err != nil  {
                     fmt.Printf("Error writing to .md file for function %s: %s\n", pkg.Name, err)
                 }
@@ -187,6 +187,9 @@ func Reflexate(repo_url string) {
             // end walking through functions
 
             content, err := os.ReadFile(file)   // walking through file in general
+            if err != nil {
+                fmt.Println("error reading file", err)
+            }
 
             if filepath.Base(file) == "main.go" {
                 doc_content = ai.CreateDoc(string(content))
