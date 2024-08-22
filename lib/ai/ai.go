@@ -15,23 +15,23 @@ import (
  var escape_string = "`"
 
  var doc_instruction = "Make a documentation for this code: "
- var doc_func_instruction = "Refactor this code, add commentaries about this function algorithm: "
+ var doc_func_instruction = "Add commentaries to this function: "
 
 
 
 
 func GenerateFunctionPromt(code string) (string){
-	result := doc_func_instruction + sum_escape + code + "\n" + sum_escape
+	result := doc_func_instruction + "\n" + sum_escape + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateSummaryPromt(code string) (string) {
-	result := sum_instruction_pkg + sum_escape + code + "\n" + sum_escape
+	result := sum_instruction_pkg + "\n" + sum_escape + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateDocumentationPromt(code string) (string) {
-	result := doc_instruction + code + sum_escape
+	result := doc_instruction + "\n" + code + sum_escape
 	return result
 }
 
@@ -47,11 +47,25 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
 	*/
 
 	   //llm_stuff
-	   options := llm.WithRepetitionPenalty(0.8)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+	   // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+	   rp := llm.WithRepetitionPenalty(0.6)
+	   //model_name
+	   //stop_words := llm.WithStopWords()
+	   //max_length := llm.WithMaxLength(8000)
+	   max_tokens := llm.WithMaxTokens(6000)
 
+	   //options := llm.WithOptions(rp,max_length,max_tokens)
+	   
+	   options := []llm.CallOption{
+		rp,
+		max_tokens,
+	   }
+	   
 
+	   //options := rp
 
-	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options)
+	
+	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options...)
     if err != nil {
         log.Fatal(err)
     }

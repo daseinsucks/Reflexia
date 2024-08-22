@@ -15,6 +15,7 @@ import (
   
 	r, err := git.PlainClone(directory, false, &git.CloneOptions{
 	  URL:               url,
+      ReferenceName:      "refs/heads/refactor/auto_doc_prompt",   // test
 	  RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	})
   
