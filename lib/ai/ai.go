@@ -50,15 +50,19 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
 	   // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
 	   rp := llm.WithRepetitionPenalty(0.6)
 	   //model_name
-	   //stop_words := llm.WithStopWords()
+	   var stop_words_array []string
+	   stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:", )
+
+	   stop_words := llm.WithStopWords(stop_words_array)
 	   //max_length := llm.WithMaxLength(8000)
-	   max_tokens := llm.WithMaxTokens(6000)
+	   max_tokens := llm.WithMaxTokens(8000)
 
 	   //options := llm.WithOptions(rp,max_length,max_tokens)
 	   
 	   options := []llm.CallOption{
 		rp,
 		max_tokens,
+		stop_words,
 	   }
 	   
 
