@@ -21,17 +21,17 @@ import (
 
 
 func GenerateFunctionPromt(code string) (string){
-	result := doc_func_instruction + "\n" + sum_escape + code + "\n" + sum_escape
+	result := doc_func_instruction + sum_escape + "\n" + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateSummaryPromt(code string) (string) {
-	result := sum_instruction_pkg + "\n" + sum_escape + code + "\n" + sum_escape
+	result := sum_instruction_pkg + sum_escape + "\n" + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateDocumentationPromt(code string) (string) {
-	result := doc_instruction + "\n" + code + sum_escape
+	result := doc_instruction + "\n" + sum_escape + code + sum_escape
 	return result
 }
 
@@ -51,7 +51,7 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
 	   rp := llm.WithRepetitionPenalty(0.6)
 	   //model_name
 	   var stop_words_array []string
-	   stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:", )
+	   stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:" )
 
 	   stop_words := llm.WithStopWords(stop_words_array)
 	   //max_length := llm.WithMaxLength(8000)
@@ -66,7 +66,6 @@ func GenerateContent (base_url string, promt string, model_name string, api_toke
 	   }
 	   
 
-	   //options := rp
 
 	
 	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options...)
