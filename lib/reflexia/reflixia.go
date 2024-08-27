@@ -2,10 +2,8 @@ package reflexia
 
 import (
 	"fmt"
-	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -159,7 +157,9 @@ func Reflexate(repo_url string) {
         for _, file := range pkg.Files {
             fmt.Printf("  File: %s\n", file)
           
+            /*
             fset := token.NewFileSet()
+            
             f, err := parser.ParseFile(fset, file, nil, parser.ParseComments)
             if err != nil {
               log.Fatalf("Error parsing file: %s", err)
@@ -167,6 +167,7 @@ func Reflexate(repo_url string) {
           
             // This code is commenting functions
             // Inspect the AST and extract function declarations
+            
             ast.Inspect(f, func(n ast.Node) bool {
               switch x := n.(type) {
               case *ast.FuncDecl:
@@ -196,6 +197,7 @@ func Reflexate(repo_url string) {
               return true
             })
             // end walking through functions
+            */
 
             content, err := os.ReadFile(file)   // walking through file in general
             if err != nil {

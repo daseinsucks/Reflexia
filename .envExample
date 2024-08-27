@@ -1,4 +1,7 @@
+#REPO_LINK=https://github.com/JackBekket/Hellper.git
 REPO_LINK=https://github.com/JackBekket/Reflexia.git
-AI_URL=""
-API_TOKEN="xxxxxxxx"
+AI_URL=xxxxx
+API_TOKEN="xxxxx"
 MODEL="deepseek-coder-6b-instruct"
+#MODEL="wizard-uncensored-code-34b"
+#MODEL="tiger-gemma-9b-v1-i1"

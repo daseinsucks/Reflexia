@@ -8,6 +8,7 @@ require (
 	github.com/JackBekket/hellper v0.0.0-20240808144902-d4a44b4b003e
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/joho/godotenv v1.5.1
+	github.com/tmc/langchaingo v0.1.11-0.20240523170143-078e88b77de4
 )
 
 require (
@@ -50,7 +51,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/tmc/langchaingo v0.1.11-0.20240523170143-078e88b77de4 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

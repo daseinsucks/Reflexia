@@ -10,48 +10,60 @@ import (
 )
 
 
- var sum_instruction_pkg = "Make a summary for this code: "
+ var sum_instruction_pkg = "Make a summary for this code package: "
  var sum_escape = "```"
  var escape_string = "`"
 
  var doc_instruction = "Make a documentation for this code: "
- var doc_func_instruction = "Refactor this code, add commentaries about this function algorithm: "
+ var doc_func_instruction = "Add commentaries to this function: "
 
 
 
 
 func GenerateFunctionPromt(code string) (string){
-	result := doc_func_instruction + sum_escape + code + "\n" + sum_escape
+	result := doc_func_instruction + sum_escape + "\n" + code + "\n" + sum_escape
 	return result
 }
 
 func GenerateSummaryPromt(code string) (string) {
-	result := sum_instruction_pkg + sum_escape + code + "\n" + sum_escape
+	result := sum_instruction_pkg + escape_string + "\n" + code + "\n" + escape_string
 	return result
 }
 
 func GenerateDocumentationPromt(code string) (string) {
-	result := doc_instruction + code + sum_escape
+	result := doc_instruction + "\n" + sum_escape + code + sum_escape
 	return result
 }
 
 
 func GenerateContent (base_url string, promt string, model_name string, api_token string, network string,) (string){    //options ...llms.CallOption
 
-	/*
-	base_url := "http://example.com"
-    prompt := "Hello, world"
-    model_name := "test_model"
-    api_token := "your_api_token"
-    network := "mainnet"
-	*/
+
 
 	   //llm_stuff
-	   options := llm.WithRepetitionPenalty(0.8)  // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+	   // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
+	   rp := llm.WithRepetitionPenalty(0.6)
+	   //model_name
+	   //var stop_words_array []string
+	   //stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:")
+	   //stop_words_array = append(stop_words_array, "Response:")
+
+	   //stop_words := llm.WithStopWords(stop_words_array)
+	   //max_length := llm.WithMaxLength(7000)
+	   max_tokens := llm.WithMaxTokens(7000)
+
+	   
+	   options := []llm.CallOption{
+		rp,
+		max_tokens,
+		//stop_words,
+		//max_length,
+	   }
+	   
 
 
-
-	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options)
+	
+	content, err := helper.GenerateContentInstruction(base_url, promt, model_name, api_token, network,options...)
     if err != nil {
         log.Fatal(err)
     }
