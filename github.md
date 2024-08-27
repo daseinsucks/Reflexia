@@ -2,15 +2,17 @@
 
 ## Summary
 
-This Go code package provides a set of functions for interacting with Git repositories. It focuses on cloning, creating branches, switching between branches, pushing changes, and switching to the master branch.
+This code package provides functions for interacting with Git repositories. It includes functions for cloning repositories, creating and switching branches, pushing changes to remote repositories, and switching to the master branch.
 
-The package starts by defining a function called `Clone` that takes a repository URL and a local directory as input. It uses the `go-git` library to clone the repository to the specified directory. The function also includes an option to clone submodules recursively.
+The `Clone` function takes a repository URL and a directory as input and clones the repository to the specified directory. It uses the `go-git` library to perform the cloning operation.
 
-Next, the `CreateAndSwitch` function creates a new branch and switches the current working directory to that branch. It takes a Git repository object and the desired branch name as input. The function uses the `go-git` library to create the branch and checkout to it.
+The `CreateAndSwitch` function creates a new branch and switches to it. It takes a repository object and a branch name as input. The function first obtains a worktree from the repository and then creates a new branch with the given name. It then checks out the new branch, ensuring that it is created if it doesn't exist.
 
-The `Push` function pushes the current branch to the remote repository. It takes a Git repository object and the branch name as input. The function uses the `go-git` library to push the changes to the remote repository.
+The `Push` function pushes the current branch to the remote repository. It takes a repository object and a branch name as input. The function first obtains the remote repository and then uses the `PushOptions` struct to specify the refspec for the push operation. Finally, it pushes the changes to the remote repository.
 
-Finally, the `SwitchToMaster` function switches the current working directory to the master branch. It takes a Git repository object as input and uses the `go-git` library to checkout to the master branch.
+The `SwitchToMaster` function switches the current branch to the master branch. It takes a repository object as input and uses the `CheckoutOptions` struct to specify the branch to switch to. The function then checks out the master branch, ensuring that it is created if it doesn't exist.
 
-In summary, this code package provides a convenient way to perform common Git operations such as cloning, creating branches, switching between branches, pushing changes, and switching to the master branch. It leverages the `go-git` library to handle the underlying Git operations, making it easy for developers to integrate these functionalities into their Go projects.
+In summary, this code package provides a set of functions for interacting with Git repositories, including cloning, creating and switching branches, pushing changes, and switching to the master branch. It uses the `go-git` library to perform these operations.
+
+
 

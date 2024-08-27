@@ -2,50 +2,26 @@
 
 ## Documentation
 
-```go
-package main
+This Go code snippet is designed to interact with a Git repository and perform some actions related to it. Let's break down the code and understand its purpose.
 
-import (
-	"log"
-	"os"
+First, the code imports several packages:
 
-	reflexia "github.com/JackBekket/Reflexia/lib/reflexia"
-	"github.com/go-git/go-git/v5"
+1. `log`: This package is used for logging messages to the console.
+2. `os`: This package provides functions for interacting with the operating system, such as reading environment variables.
+3. `reflexia`: This package, likely a custom package, seems to be responsible for performing some actions related to the Git repository.
+4. `go-git/go-git`: This package provides a Go implementation of the Git version control system.
 
-	//github "./lib"
-	"github.com/joho/godotenv"
-)
+Now, let's dive into the code itself:
 
-// Package represents a software package with its name, files, and Git repository.
-type Package struct {
-    Name  string
-    Files []string
-    Repo *git.Repository
-}
+1. The code defines a `Package` struct, which holds information about a package, including its name, a list of files, and a pointer to a Git repository.
 
-func main() {
-    // Load environment variables from .env file.
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+2. In the `main` function, the code first loads environment variables from a `.env` file using the `godotenv` package. This is a common practice for storing sensitive information like API keys or database credentials.
 
-    // Retrieve the REPO_LINK environment variable.
-    repoLink := os.Getenv("REPO_LINK")
-    if repoLink == "" {
-        log.Fatal("REPO_LINK is not set in .env")
-    }
+3. The code then retrieves the value of the `REPO_LINK` environment variable, which should contain the URL of the Git repository. If this variable is not set, the code will log an error and exit.
 
-    // Call the Reflexia function to perform the desired action on the specified repository.
-    reflexia.Reflexate(repoLink)
-}
-```
+4. Finally, the code calls the `Reflexate` function from the `reflexia` package, passing the `REPO_LINK` as an argument. This function likely performs the desired actions related to the Git repository, such as cloning it, fetching changes, or performing some other operations.
 
-This code snippet demonstrates a simple Go program that loads environment variables from a .env file and then calls a function called `Reflexate` from the `reflexia` package. The `Reflexate` function takes a repository link as input and performs some action on the specified repository.
+In summary, this code snippet is designed to interact with a Git repository specified by the `REPO_LINK` environment variable. It loads environment variables from a `.env` file, retrieves the repository URL, and then calls a custom function `Reflexate` to perform actions related to the repository.
 
-The code first loads environment variables from the .env file using the `godotenv` package. It then retrieves the value of the `REPO_LINK` environment variable, which should contain the URL of the Git repository. If the `REPO_LINK` variable is not set in the .env file, the program will exit with an error message.
 
-Once the repository link is obtained, the code calls the `Reflexate` function from the `reflexia` package, passing the repository link as an argument. The `Reflexate` function is responsible for performing the desired action on the specified repository.
-
-In summary, this code snippet demonstrates a basic workflow for loading environment variables, retrieving a repository link, and calling a function to perform an action on the specified repository. The specific action performed by the `Reflexate` function is not shown in the provided code, but it is assumed to be defined in the `reflexia` package.
 

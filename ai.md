@@ -2,29 +2,15 @@
 
 ## Summary
 
-This code package provides functions for generating summaries, documentation, and comments for code using an AI model. It leverages the LangChain library and requires environment variables for the AI URL, model name, API token, and network.
+This code package provides a set of functions to generate summaries, documentation, and comments for code. It leverages an external AI service to perform these tasks. The package first defines several variables, including instructions for generating summaries, documentation, and comments for functions. It also defines a function to generate a prompt for summarizing code, generating documentation, and generating comments for a function.
 
-The package includes functions for generating summaries, documentation, and comments for code. It also provides a function to test the generation process with a given initial prompt.
+The package then defines a function to generate content using an AI service, taking parameters such as the base URL, prompt, model name, API token, and network. It also includes options for repetition penalty, maximum tokens, and stop words. The function returns the generated content.
 
-Here's a breakdown of the functions:
+The package also includes functions to test the content generation process, get a summary of a package, create documentation for code, and generate comments for a function. These functions utilize the previously defined variables and functions to perform their respective tasks.
 
-1. GenerateFunctionPromt(code string) (string): Generates a prompt for a function, including the code and instructions for the AI model.
+Finally, the package includes a function to load environment variables from a .env file, ensuring that the necessary parameters for the AI service are available.
 
-2. GenerateSummaryPromt(code string) (string): Generates a prompt for a code summary, including the code and instructions for the AI model.
+In summary, this code package provides a comprehensive set of functions to generate summaries, documentation, and comments for code using an external AI service. It leverages environment variables and options for customization, allowing users to tailor the process to their specific needs.
 
-3. GenerateDocumentationPromt(code string) (string): Generates a prompt for code documentation, including the code and instructions for the AI model.
 
-4. GenerateContent(base_url string, promt string, model_name string, api_token string, network string) (string): Generates content using the provided prompt, model, and API token. It also includes options for repetition penalty, stop words, and maximum tokens.
-
-5. TestGenerateContent(initial_promt string) (string): Tests the content generation process with a given initial prompt.
-
-6. GetSummaryPackage(initial_promt string) (string): Returns the summary of the code based on the initial prompt.
-
-7. CreateDoc(code string) (string): Generates documentation for the given code using the AI model.
-
-8. GenerateCommentForFunction(code string) (string): Generates a comment for a function based on the given code using the AI model.
-
-9. getEnv(): Loads environment variables from a .env file.
-
-In summary, this code package provides a set of functions for generating summaries, documentation, and comments for code using an AI model. It requires environment variables for the AI URL, model name, API token, and network.
 
