@@ -10,7 +10,7 @@ import (
 )
 
 
- var sum_instruction_pkg = "Make a summary for this code: "
+ var sum_instruction_pkg = "Make a summary for this code package: "
  var sum_escape = "```"
  var escape_string = "`"
 
@@ -26,7 +26,7 @@ func GenerateFunctionPromt(code string) (string){
 }
 
 func GenerateSummaryPromt(code string) (string) {
-	result := sum_instruction_pkg + sum_escape + "\n" + code + "\n" + sum_escape
+	result := sum_instruction_pkg + escape_string + "\n" + code + "\n" + escape_string
 	return result
 }
 
@@ -38,31 +38,26 @@ func GenerateDocumentationPromt(code string) (string) {
 
 func GenerateContent (base_url string, promt string, model_name string, api_token string, network string,) (string){    //options ...llms.CallOption
 
-	/*
-	base_url := "http://example.com"
-    prompt := "Hello, world"
-    model_name := "test_model"
-    api_token := "your_api_token"
-    network := "mainnet"
-	*/
+
 
 	   //llm_stuff
 	   // try repetition penalty to workaround moments when ai stuck with same phrase over and over again
 	   rp := llm.WithRepetitionPenalty(0.6)
 	   //model_name
-	   var stop_words_array []string
-	   stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:" )
+	   //var stop_words_array []string
+	   //stop_words_array = append(stop_words_array, "Follow this instruction and write appropriate response:")
+	   //stop_words_array = append(stop_words_array, "Response:")
 
-	   stop_words := llm.WithStopWords(stop_words_array)
-	   //max_length := llm.WithMaxLength(8000)
-	   max_tokens := llm.WithMaxTokens(8000)
+	   //stop_words := llm.WithStopWords(stop_words_array)
+	   //max_length := llm.WithMaxLength(7000)
+	   max_tokens := llm.WithMaxTokens(7000)
 
-	   //options := llm.WithOptions(rp,max_length,max_tokens)
 	   
 	   options := []llm.CallOption{
 		rp,
 		max_tokens,
-		stop_words,
+		//stop_words,
+		//max_length,
 	   }
 	   
 
