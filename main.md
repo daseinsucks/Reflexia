@@ -2,50 +2,21 @@
 
 ## Documentation
 
-```go
-package main
+This code sets up a Telegram bot using the `go-telegram-bot-api` library. It initializes the bot, loads environment variables, and handles incoming updates. The bot interacts with a local AI endpoint and a database to manage user data.
 
-import (
-	"log"
-	"os"
+First, the code loads environment variables using `godotenv.Load()`. It retrieves the OpenAI API key (which is actually a local key for localai) and the Telegram bot token from the environment variables.
 
-	reflexia "github.com/JackBekket/Reflexia/lib/reflexia"
-	"github.com/go-git/go-git/v5"
+Next, the code initializes a new Telegram bot using the retrieved token. It also retrieves the admin ID and GPT key from the environment variables.
 
-	//github "./lib"
-	"github.com/joho/godotenv"
-)
+The code then creates a map to store admin data, including the admin ID and GPT key.
 
-// Package represents a software package with its name, files, and Git repository.
-type Package struct {
-    Name  string
-    Files []string
-    Repo *git.Repository
-}
+The code initializes a database and a command handler. The database is used to store user data, and the command handler is responsible for processing incoming commands.
 
-func main() {
-    // Load environment variables from .env file.
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+The code then starts a loop to handle incoming updates from the Telegram API. For each update, it checks if the user is new. If the user is new, the code creates a new entry in the database.
 
-    // Retrieve the REPO_LINK environment variable.
-    repoLink := os.Getenv("REPO_LINK")
-    if repoLink == "" {
-        log.Fatal("REPO_LINK is not set in .env")
-    }
+Finally, the code starts a goroutine to handle updates and process commands. The goroutine listens for updates from the Telegram API and passes them to the command handler.
 
-    // Call the Reflexia function to perform the desired action on the specified repository.
-    reflexia.Reflexate(repoLink)
-}
-```
+In summary, this code sets up a Telegram bot that interacts with a local AI endpoint and a database to manage user data. It handles incoming updates, processes commands, and creates new database entries for new users.
 
-This code snippet demonstrates a simple Go program that loads environment variables from a .env file and then calls a function called `Reflexate` from the `reflexia` package. The `Reflexate` function takes a repository link as input and performs some action on the specified repository.
 
-The code first loads environment variables from the .env file using the `godotenv` package. It then retrieves the value of the `REPO_LINK` environment variable, which should contain the URL of the Git repository. If the `REPO_LINK` variable is not set in the .env file, the program will exit with an error message.
-
-Once the repository link is obtained, the code calls the `Reflexate` function from the `reflexia` package, passing the repository link as an argument. The `Reflexate` function is responsible for performing the desired action on the specified repository.
-
-In summary, this code snippet demonstrates a basic workflow for loading environment variables, retrieving a repository link, and calling a function to perform an action on the specified repository. The specific action performed by the `Reflexate` function is not shown in the provided code, but it is assumed to be defined in the `reflexia` package.
 
