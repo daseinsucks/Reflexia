@@ -2,19 +2,28 @@
 
 ## Summary
 
+This code package, named "reflexia," is designed to analyze and document Go source code using artificial intelligence (AI). It takes a Git repository URL as input and performs the following steps:
 
-The code you've provided is a Go program that uses AI to generate documentation and summaries for Go code packages. It uses the `go/parser` package to parse Go files, the `go/token` package to provide position information, and the `regexp` package to find function declarations in the code.
+1. Clones the repository to a temporary directory.
+2. Walks through the files in the repository, identifying Go files (those with the ".go" extension).
+3. For each Go file, it extracts the function declarations and uses an AI model to generate comments for each function.
+4. Creates a Markdown file for each package, containing the generated comments and other relevant information.
 
-The program has a `Reflexate` function that takes a repository URL as input. It clones the repository to a temporary directory, then walks through the files in the repository. For each Go file, it parses the file and extracts the package name and the file paths. It also creates a Markdown file for each package and writes the package name to the file.
+The package uses the following external libraries:
 
-The program then walks through the files again, this time generating documentation and summaries for each file. It uses AI to generate comments and summaries for each function in the file. The comments and summaries are written to the Markdown file for the package.
+- "go/parser" for parsing Go source code.
+- "go/token" for managing file positions and tokens.
+- "log" for logging messages.
+- "os" for interacting with the operating system.
+- "path/filepath" for working with file paths.
+- "regexp" for regular expressions.
+- "github" for interacting with GitHub repositories.
+- "github.com/go-git/go-git/v5" for cloning Git repositories.
+- "github.com/joho/godotenv" for loading environment variables from a ".env" file.
 
-Finally, the program removes the temporary directory.
+The package also includes a function called "ParseContent" that takes a byte slice of Go code and a file path as input. It uses the "getFunctions" function to extract function declarations from the code and then uses an AI model to generate comments for each function. The generated comments are returned as a slice of strings.
 
-The `ParseContent` function takes a byte slice and a file path as input. It uses a regular expression to find function declarations in the input data. It then uses AI to generate comments for each function and returns the comments as a slice of strings.
+The "getFunctions" function uses a regular expression to find function declarations in the input string. It returns a slice of strings containing the matched function declarations.
 
-The `getFunctions` function takes a string as input and uses a regular expression to find all function declarations in the input string. It returns the function declarations as a slice of strings.
-
-Please note that the AI part of this program is not implemented yet. The `ai.GenerateCommentForFunction` and `ai.TestGenerateContent` functions are placeholders for the AI functionality.
-
+Overall, this code package provides a comprehensive solution for analyzing and documenting Go source code using AI. It automates the process of extracting function declarations and generating comments, which can save developers time and effort.
 

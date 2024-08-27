@@ -2,105 +2,29 @@
 
 ## Summary
 
+This code package provides functions for generating summaries, documentation, and comments for code using an AI model. It leverages the LangChain library and requires environment variables for the AI URL, model name, API token, and network.
 
-```go
-package ai
+The package includes functions for generating summaries, documentation, and comments for code. It also provides a function to test the generation process with a given initial prompt.
 
-import (
-	"log"
-	"os"
+Here's a breakdown of the functions:
 
-	helper "github.com/JackBekket/hellper/lib/langchain"
-	"github.com/joho/godotenv"
-	llm "github.com/tmc/langchaingo/llms"
-)
+1. GenerateFunctionPromt(code string) (string): Generates a prompt for a function, including the code and instructions for the AI model.
 
-// This package provides functions for generating function comments, summaries, and documentation for a given code.
-// It uses an AI model to generate these elements based on the provided code.
+2. GenerateSummaryPromt(code string) (string): Generates a prompt for a code summary, including the code and instructions for the AI model.
 
-// GenerateFunctionPromt generates a prompt for generating function comments.
-func GenerateFunctionPromt(code string) string {
-	return "Make a commentary for this function: " + code
-}
+3. GenerateDocumentationPromt(code string) (string): Generates a prompt for code documentation, including the code and instructions for the AI model.
 
-// GenerateSummaryPromt generates a prompt for generating code summaries.
-func GenerateSummaryPromt(code string) string {
-	return "Make a summary for this code: " + code
-}
+4. GenerateContent(base_url string, promt string, model_name string, api_token string, network string) (string): Generates content using the provided prompt, model, and API token. It also includes options for repetition penalty, stop words, and maximum tokens.
 
-// GenerateDocumentationPromt generates a prompt for generating code documentation.
-func GenerateDocumentationPromt(code string) string {
-	return "Make a documentation for this code: " + code
-}
+5. TestGenerateContent(initial_promt string) (string): Tests the content generation process with a given initial prompt.
 
-// GenerateContent generates content using an AI model.
-func GenerateContent(baseURL, promt, modelName, apiToken, network string, options ...llm.CallOption) string {
-	content, err := helper.GenerateContentInstruction(baseURL, promt, modelName, apiToken, network, options...)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return content
-}
+6. GetSummaryPackage(initial_promt string) (string): Returns the summary of the code based on the initial prompt.
 
-// TestGenerateContent tests the GenerateContent function.
-func TestGenerateContent(initialPromt string) string {
-	getEnv()
-	aiLink := os.Getenv("AI_URL")
-	model := os.Getenv("MODEL")
-	apiToken := os.Getenv("API_TOKEN")
-	code := initialPromt
-	request := GenerateSummaryPromt(code)
-	network := "local"
-	summary := GenerateContent(aiLink, request, model, apiToken, network)
-	return summary
-}
+7. CreateDoc(code string) (string): Generates documentation for the given code using the AI model.
 
-// GetSummaryPackage generates a summary for a package of code.
-func GetSummaryPackage(initialPromt string) string {
-	return TestGenerateContent(initialPromt)
-}
+8. GenerateCommentForFunction(code string) (string): Generates a comment for a function based on the given code using the AI model.
 
-// CreateDoc generates documentation for a piece of code.
-func CreateDoc(code string) string {
-	getEnv()
-	aiLink := os.Getenv("AI_URL")
-	model := os.Getenv("MODEL")
-	apiToken := os.Getenv("API_TOKEN")
-	request := GenerateDocumentationPromt(code)
-	network := "local"
-	documentation := GenerateContent(aiLink, request, model, apiToken, network)
-	return documentation
-}
+9. getEnv(): Loads environment variables from a .env file.
 
-// GenerateCommentForFunction generates comments for a function in a piece of code.
-func GenerateCommentForFunction(code string) string {
-	getEnv()
-	aiLink := os.Getenv("AI_URL")
-	model := os.Getenv("MODEL")
-	apiToken := os.Getenv("API_TOKEN")
-	network := "local"
-	req := GenerateFunctionPromt(code)
-	response := GenerateContent(aiLink, req, model, apiToken, network)
-	return response
-}
-
-// getEnv loads environment variables from a .env file.
-func getEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
-```
-
-This code package provides a set of functions for generating function comments, summaries, and documentation for a given code. It uses an AI model to generate these elements based on the provided code. The functions are designed to be used in a Go environment.
-
-The package imports several packages, including "log", "os", "github.com/JackBekket/hellper/lib/langchain", "github.com/joho/godotenv", and "github.com/tmc/langchaingo/llms". The "log" package is used for logging errors, and the "os" package is used for interacting with the operating system. The "github.com/joho/godotenv" package is used for loading environment variables from a .env file. The "github.com/tmc/langchaingo/llms" package is used for interacting with an AI model.
-
-The package provides several functions for generating prompts for generating function comments, summaries, and documentation. It also provides a function for generating content using an AI model. The "GenerateContent" function takes a base URL, a prompt, a model name, an API token, a network, and options for the AI model. The "TestGenerateContent" function tests the "GenerateContent" function. The "GetSummaryPackage" and "CreateDoc" functions use the "TestGenerateContent" function to generate summaries and documentation for a package of code, respectively. The "GenerateCommentForFunction" function generates comments for a function in a piece of code.
-
-The package also provides a "getEnv" function for loading environment variables from a .env file. This function is called at the start of the "GenerateContent" function in the "TestGenerateContent" function.
-
-The package is designed to be used in a Go environment.
-
+In summary, this code package provides a set of functions for generating summaries, documentation, and comments for code using an AI model. It requires environment variables for the AI URL, model name, API token, and network.
 
