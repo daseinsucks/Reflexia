@@ -6,21 +6,29 @@ import (
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	//"github.com/go-git/go-git/v5/plumbing/transport/http"     // for auth
 )
 
 // Clone repo
-  func Clone(url string, directory string) (*git.Repository,error) {
-	// Clone the given repository to the given directory
-	fmt.Printf("git clone %s %s --recursive\n", url, directory)
-  
-	r, err := git.PlainClone(directory, false, &git.CloneOptions{
-	  URL:               url,
-      //ReferenceName:      "refs/heads/refactor/auto_doc_prompt",   // test
-	  RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-	})
-  
-	return r,err
-  }
+func Clone(url string, directory string) (*git.Repository, error) {
+    fmt.Printf("git clone %s %s --recursive\n", url, directory)
+
+    //authMethod, err := ssh.NewSSHAgentAuth("git")
+
+    repo, err := git.PlainClone(directory, false, &git.CloneOptions{
+        URL:               url,
+        RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+        // Set the SSH client for authentication
+        /*
+        Auth: &http.BasicAuth{
+			Username: "jackbekket", // yes, this can be anything except an empty string
+			Password: "gh_token here",
+		},
+        */
+    })
+
+    return repo, err
+}
 
  // Create a new branch and switch to it
  func CreateAndSwitch(r *git.Repository, branch string) error {

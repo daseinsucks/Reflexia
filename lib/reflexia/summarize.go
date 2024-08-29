@@ -76,8 +76,11 @@ func Summarize(repo_url string) {
 
     for _, pkg := range pkgs {
         fmt.Printf("Package: %s\n", pkg.Name)
-
-        readme_file, err := os.Create(fmt.Sprintf("./temp/%s.md", pkg.Name))
+        pkgDir := filepath.Dir(pkg.Path)
+        //readmePath := filepath.Join(pkgDir, "README.md")
+        //readme_file, err := os.Create(fmt.Sprintf("./temp/%s.md", pkg.Name))
+        //readme_file, err := os.Create(fmt.Sprintf("./temp/%s/%s.md", pkgDir, pkg.Name))
+        readme_file, err := os.Create(fmt.Sprintf("%s/README.md", pkgDir))
         if err != nil {
             fmt.Printf("Error creating .md file for package %s: %s\n", pkg.Name, err)
             return
@@ -98,7 +101,7 @@ func Summarize(repo_url string) {
             if err != nil {
                 fmt.Println("error reading file", err)
             }
-
+            /*
             if filepath.Base(file) == "main.go" {
                 doc_content := ai.CreateDoc(string(content))
                 _, err = readme_file.WriteString(fmt.Sprintf("## Documentation\n\n%s\n\n", doc_content))
@@ -107,6 +110,7 @@ func Summarize(repo_url string) {
                     return
                 }
             } else {
+            */
                 summary_content := ai.TestGenerateContent(string(content))
                 _, err = readme_file.WriteString(fmt.Sprintf("## Summary for %s\n\n%s\n\n",filepath.Base(file), summary_content))
                 if err != nil {
@@ -114,7 +118,7 @@ func Summarize(repo_url string) {
                     return
                 }
                 pkg.Markdowns = append(pkg.Markdowns, summary_content)
-            }
+            
 
             //pkg.Markdowns = append(pkg.Markdowns, summary_content)
         } 
