@@ -1,12 +1,24 @@
 # ai
 
-## Summary
+## Summary for ai.go
 
-This code package provides functionalities for generating summaries, documentation, and commentaries for code snippets. It leverages an external AI service to process code and generate the desired output. The package includes functions to generate prompts for the AI, interact with the AI service, and process the generated responses.
+This code package provides functions for generating summaries, documentation, and comments for code. It utilizes an AI model to process the input code and generate the desired output. The package also includes functions for setting up the environment and loading environment variables from a .env file.
 
-The package offers functions to generate summaries for code packages, create documentation for code snippets, and add commentaries to functions. It utilizes a set of predefined instructions and formatting to ensure the AI service understands the desired output. The package also handles the interaction with the AI service, including setting up the necessary parameters and processing the generated responses.
+The package defines several functions, including GenerateSummaryPromt, GenerateDocumentationPromt, GenerateFunctionPromt, GenerateContent, TestGenerateContent, GetSummaryPackage, CreateDoc, and GenerateCommentForFunction. These functions work together to process the input code and generate the desired output, such as summaries, documentation, and comments.
 
-In addition, the package includes functions to manage the environment variables required for the AI service, such as the base URL, model name, and API token. It also provides functions to handle any errors that may occur during the process.
+The package also includes a function called getEnv, which loads environment variables from a .env file. This function is essential for setting up the environment and ensuring that the AI model can be accessed and used correctly.
 
-By using this package, developers can easily generate summaries, documentation, and commentaries for their code, saving time and effort. The package's modular design allows for easy integration into existing workflows and projects. 
+In summary, this code package provides a comprehensive set of tools for generating summaries, documentation, and comments for code using an AI model. It also includes functions for setting up the environment and loading environment variables, making it a valuable resource for developers who need to automate these tasks.
+
+
+
+## Package Summary
+
+This code package offers a suite of tools for generating summaries, documentation, and comments for code, all powered by an AI model. The package includes functions like GenerateSummaryPromt, GenerateDocumentationPromt, GenerateFunctionPromt, GenerateContent, TestGenerateContent, GetSummaryPackage, CreateDoc, and GenerateCommentForFunction, which work together to process input code and produce the desired output.
+
+In addition to these functions, the package also provides a function called getEnv, which is responsible for loading environment variables from a .env file. This function is crucial for setting up the environment and ensuring that the AI model can be accessed and used correctly.
+
+In essence, this code package provides a comprehensive solution for automating the generation of summaries, documentation, and comments for code, along with the necessary tools for setting up the environment and loading environment variables. This makes it a valuable resource for developers looking to streamline these tasks.
+
+
 
