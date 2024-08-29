@@ -28,6 +28,6 @@ func main() {
         log.Fatal("REPO_LINK is not set in .env")
     }
 
-    reflexia.Reflexate(repoLink)
+    reflexia.Summarize(repoLink)
     
 }

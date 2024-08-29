@@ -26,7 +26,7 @@ type Package struct {
     Markdowns []string
 }
 
-func Reflexate(repo_url string) {
+func Summarize(repo_url string) {
     err := godotenv.Load()
     if err != nil {
         log.Fatal("Error loading .env file")
