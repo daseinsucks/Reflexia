@@ -5,3 +5,4 @@ API_TOKEN="xxxxx"
 MODEL="deepseek-coder-6b-instruct"
 #MODEL="wizard-uncensored-code-34b"
 #MODEL="tiger-gemma-9b-v1-i1"
+#MODEL=big-tiger-gemma-27b-v1

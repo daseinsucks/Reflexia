@@ -2,15 +2,11 @@
 
 ## Summary
 
-This code package provides a set of functions to generate summaries, documentation, and comments for code. It leverages an external AI service to perform these tasks. The package first defines several variables, including instructions for generating summaries, documentation, and comments for functions. It also defines a function to generate a prompt for summarizing code, generating documentation, and generating comments for a function.
+This code package provides functionalities for generating summaries, documentation, and commentaries for code snippets. It leverages an external AI service to process code and generate the desired output. The package includes functions to generate prompts for the AI, interact with the AI service, and process the generated responses.
 
-The package then defines a function to generate content using an AI service, taking parameters such as the base URL, prompt, model name, API token, and network. It also includes options for repetition penalty, maximum tokens, and stop words. The function returns the generated content.
+The package offers functions to generate summaries for code packages, create documentation for code snippets, and add commentaries to functions. It utilizes a set of predefined instructions and formatting to ensure the AI service understands the desired output. The package also handles the interaction with the AI service, including setting up the necessary parameters and processing the generated responses.
 
-The package also includes functions to test the content generation process, get a summary of a package, create documentation for code, and generate comments for a function. These functions utilize the previously defined variables and functions to perform their respective tasks.
+In addition, the package includes functions to manage the environment variables required for the AI service, such as the base URL, model name, and API token. It also provides functions to handle any errors that may occur during the process.
 
-Finally, the package includes a function to load environment variables from a .env file, ensuring that the necessary parameters for the AI service are available.
-
-In summary, this code package provides a comprehensive set of functions to generate summaries, documentation, and comments for code using an external AI service. It leverages environment variables and options for customization, allowing users to tailor the process to their specific needs.
-
-
+By using this package, developers can easily generate summaries, documentation, and commentaries for their code, saving time and effort. The package's modular design allows for easy integration into existing workflows and projects. 
 
