@@ -11,9 +11,18 @@ type SummarizerService struct {
 	Network   string
 }
 
-func (s *SummarizerService) SummarizeRequest(content string, prompt string) (string, error) {
+func (s *SummarizerService) CodeSummaryRequest(prompt, content string) (string, error) {
 	response, err := helper.GenerateContentInstruction(s.HelperURL,
 		prompt+"```"+content+"```",
+		s.Model, s.ApiToken, s.Network,
+	)
+
+	return response, err
+}
+
+func (s *SummarizerService) SummarizeRequest(prompt, content string) (string, error) {
+	response, err := helper.GenerateContentInstruction(s.HelperURL,
+		prompt+"\n\n"+content,
 		s.Model, s.ApiToken, s.Network,
 	)
 
