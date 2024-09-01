@@ -58,7 +58,8 @@ Provided code:
 const DefaultSummaryPrompt = `
 Based on provided input from summary of project files create a markdown summary of what that project code does.
 First write a short summary about provided project code summary.
-Always specify which environment variables or file paths can be used for configuration. If they present.
+Always specify which environment variables can be used for configuration.
+Always include filenames. Try to guess the project name from them if possible.
 Then write summary about every major code part, group it with markdown headers.
 Try to explain relations between code entities, try to find unclear places, possibly dead code.		
 If unclear places or dead code are not present - don't write anything about their absense.
@@ -68,6 +69,7 @@ It is mandatory to prepend the <end_of_summary> at the very end of your output.
 `
 const DefaultReadmePrompt = `
 Based on provided input from technical summary of the project create a README.md contents for that project.
+Try to guess the project name from filenames or other namings, if present.
 Include short project description, possible configuration and/or run instructions.
 Try to be clear, concise, and brief.
 It is mandatory to prepend the <end_of_summary> at the very end of your output.
