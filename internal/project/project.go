@@ -58,7 +58,7 @@ Provided code:
 const DefaultSummaryPrompt = `
 Based on provided input from summary of project files create a markdown summary of what that project code does.
 First write a short summary about provided project code summary.
-If there are any information about the run configuration, such as environment variables, cli arguments, or config files - include that in the project summary.
+Always specify which environment variables or file paths can be used for configuration. If they present.
 Then write summary about every major code part, group it with markdown headers.
 Try to explain relations between code entities, try to find unclear places, possibly dead code.		
 If unclear places or dead code are not present - don't write anything about their absense.
