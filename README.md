@@ -1,19 +1,16 @@
-## README.md
+# Reflexia: Code Summarizer
 
-This project generates a README file and a SUMMARY file for a given directory based on the content of the files within it. It uses an external summarization service to generate summaries of the code and the overall content.
+Reflexia is a tool designed to generate code summaries for a given project directory. It utilizes a summarizer service to process the code and create a comprehensive summary of the project.
 
-### Configuration
+## Configuration
 
-The project uses environment variables to configure the summarization service and the file filters. Set the following environment variables:
+The project configuration is loaded from environment variables and a project configuration file. You can set the environment variables as needed, and the project configuration file should be placed in the same directory as the executable.
 
-- `PWD`: The current working directory.
-- `HELPER_URL`: The URL of the helper service used for content generation.
-- `MODEL`: The model used by the summarization service.
-- `API_TOKEN`: The API token for the summarization service.
+## Running Reflexia
 
-### Run Instructions
+1. Make sure you have the necessary dependencies installed.
+2. Set the environment variables as required.
+3. Run the Reflexia executable: `reflexia`
 
-1. Make sure the environment variables are set.
-2. Run the project using the following command: `go run reflexia.go`
+This will process the code in the current directory, generate summaries for each file, and create a final summary of all summaries in a file named "SUMMARY.md". Additionally, it will generate a README file named "README_GENERATED.md" or "README.md" if a README.md file already exists.
 
-This will generate two files: `README_GENERATED.md` and `SUMMARY.md` in the current directory.

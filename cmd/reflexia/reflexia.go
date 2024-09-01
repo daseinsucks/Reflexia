@@ -38,11 +38,15 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Println(d.Name())
+				relPath, err := filepath.Rel(dirPath, path)
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Println(relPath)
 				response, err := summarizerService.CodeSummaryRequest(
 					projectConfig.CodePrompt, string(content))
 				fmt.Printf("\n")
-				fileMap[d.Name()] = response
+				fileMap[relPath] = response
 				if err != nil {
 					log.Fatal(err)
 				}

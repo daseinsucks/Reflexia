@@ -12,7 +12,11 @@ import (
 const DefaultCodePrompt = `
 Compress the provided code logic to save the llm context space.
 Do not lose the details, such as trivial code logic or edge case processing.
+If you see any possibility to include the information about external configuration such as environment variables or config files - include them in a separate list like on example below.
+Don't confuse the struct fields and os.Getenv calls or something similar when doing such lists.
+Don't write the group section if it's empty, save the space!
 Your output will be used for summarizing the whole project file by file.
+It is mandatory to prepend the <end_of_summary> at the very end of your output.
 
 Example input:
 ` + "```" + `
@@ -35,19 +39,18 @@ func main() {
 ` + "```" + `
 
 Example output:
-` + "```" + `
 struct FooBar:
 	- Fields: Foo, Bar
 func main():
 	- assigns var foobar with FooBar struct with fields Foo: "foo", Bar: "bar"
-	- prints foobar.Foo + foobar.Bar + env var "BAZ"
+	- prints foobar.Foo + foobar.Bar + environment variable "BAZ"
 
 external references:
 	- fmt.Println
 	- os.Getenv
 environment variables:
 	- "BAZ"
-` + "```" + `
+<end_of_summary>
 
 Provided code:
 `
@@ -58,13 +61,16 @@ First write a short summary about provided project code summary.
 If there are any information about the run configuration, such as environment variables, cli arguments, or config files - include that in the project summary.
 Then write summary about every major code part, group it with markdown headers.
 Try to explain relations between code entities, try to find unclear places, possibly dead code.		
+If unclear places or dead code are not present - don't write anything about their absense.
 Try to be clear, concise, and brief.
 The main goal is to summarize the logic of the whole project.
+It is mandatory to prepend the <end_of_summary> at the very end of your output.
 `
 const DefaultReadmePrompt = `
 Based on provided input from technical summary of the project create a README.md contents for that project.
 Include short project description, possible configuration and/or run instructions.
 Try to be clear, concise, and brief.
+It is mandatory to prepend the <end_of_summary> at the very end of your output.
 `
 
 type ProjectConfig struct {
