@@ -1,14 +1,10 @@
-module github.com/JackBekket/Reflexia
+module reflexia
 
-go 1.22.3
-
-toolchain go1.22.6
+go 1.23.0
 
 require (
-	github.com/JackBekket/hellper v0.0.0-20240808144902-d4a44b4b003e
-	github.com/go-git/go-git/v5 v5.12.0
-	github.com/joho/godotenv v1.5.1
-	github.com/tmc/langchaingo v0.1.11-0.20240523170143-078e88b77de4
+	github.com/JackBekket/hellper v0.0.0-20240830092228-fba2f4594290
+	github.com/tmc/langchaingo v0.1.12
 )
 
 require (
@@ -25,6 +21,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
+	github.com/go-git/go-git/v5 v5.12.0 // indirect
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -33,6 +30,7 @@ require (
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
