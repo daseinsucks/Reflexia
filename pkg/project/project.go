@@ -150,7 +150,7 @@ func GetProjectConfig(currentDirectory string) *ProjectConfig {
 			RootPath:          currentDirectory,
 		},
 	} {
-		if hasFilterFiles(currentDirectory, config.FileFilter) &&
+		if hasFilterFiles(currentDirectory, config.FileFilter) ||
 			hasRootFilterFile(currentDirectory, config.ProjectRootFilter) {
 			return &config
 		}
