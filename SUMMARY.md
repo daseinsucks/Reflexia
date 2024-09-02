@@ -1,4 +1,4 @@
-The provided project code is a command-line tool that summarizes the contents of a given project directory. It takes a GitHub link or a directory path as input and uses an external API to generate summaries of the project's code, project, and README files. The tool also creates two output files: README_GENERATED.md and SUMMARY.md, which contain the generated summaries.
+This project is a command-line tool that analyzes and summarizes code files within a given directory. It uses an external summarization service to generate summaries for each file and then combines these summaries into a project-level summary. The tool also generates a README file based on the project summary and file summaries.
 
 Project structure:
 - cmd/reflexia/reflexia.go
@@ -6,30 +6,87 @@ Project structure:
 - pkg/summarizer/service.go
 - pkg/summarizer/summarizer.go
 
-Environment variables: PWD, HELPER_URL, MODEL, API_TOKEN, GH_TOKEN
-CLI arguments: -g (github link), -u (github username), -t (github token)
+Summary of code parts:
 
-## SummarizerService
-The SummarizerService struct contains the necessary information for interacting with the external API, including the helper URL, model, API token, network, and LLM options.
+### Main function in cmd/reflexia/reflexia.go
+1. Loads environment variables from .env file.
+2. Defines flags:
+    - "g": valid link for github repository
+    - "u": github username for ssh auth
+    - "t": github token for ssh auth
+3. Defines boolean flags:
+    - "c": do not check project root folder specific files such as go.mod or package.json
+    - "s": do not create SUMMARY.md and README.md, just print the file summaries
+    - "r": do not create README.md
+4. Parses flags.
+5. Calls processWorkingDirectory function to get directory path.
+6. Creates summarizerService instance.
+7. Gets project configuration.
+8. Calls SummarizeProjectFiles function to get file summaries.
+9. If noSummary flag is not set:
+    - Calls SummarizeProject function to get project summary.
+    - Creates SUMMARY.md file and writes summary content.
+10. If noReadme flag is not set:
+    - Calls SummarizeReadme function to get readme content.
+    - Creates README_GENERATED.md file and writes readme content.
 
-## processWorkingDirectory
-This function takes a GitHub link, GitHub username, and GitHub token as input and returns the directory path of the project. If a GitHub link is provided, it parses the link, extracts the repository path, creates a temporary directory, and clones the repository using the provided credentials. If no GitHub link is provided, it takes the first command-line argument as the directory path.
+### processWorkingDirectory function in cmd/reflexia/reflexia.go
+1. Gets current working directory from environment variable PWD.
+2. If ghLink is not empty:
+    - Parses github repository url.
+    - Creates temporary directory.
+    - Clones repository to temporary directory.
+3. If flag.Args() is not empty:
+    - Sets directory path to first argument.
+4. Returns directory path.
 
-## loadEnv
-This function loads the value of a given environment variable.
+### ProjectConfig struct in pkg/project/project.go
+1. Fields:
+    - FileFilter: []string
+    - ProjectRootFilter: []string
+    - CodePrompt: string
+    - SummaryPrompt: string
+    - ReadmePrompt: string
+    - RootPath: string
 
-## main
-The main function loads environment variables, parses command-line arguments, calls processWorkingDirectory to get the directory path, creates a SummarizerService instance, gets the project configuration, summarizes the project files, project, and README, and writes the summaries to the output files.
+### GetProjectConfig function in pkg/project/project.go
+1. Reads configuration from files.
+2. Returns ProjectConfig struct.
 
-## GetProjectConfig
-This function iterates through predefined ProjectConfig structs and checks if the current directory contains files matching the FileFilter and ProjectRootFilter. If a match is found, it returns the corresponding ProjectConfig struct. Otherwise, it logs an error and returns an empty ProjectConfig struct.
+### hasFilterFiles and hasRootFilterFile functions in pkg/project/project.go
+1. Checks if files with given filters exist in directory.
+2. Returns true if found, false otherwise.
 
-## SummarizeReadme
-This function takes a ProjectConfig struct and a summary content string as input and calls the SummarizeRequest method with the project's ReadmePrompt and the summary content. It returns the result and any error encountered.
+### SummarizerService struct in pkg/summarizer/service.go
+1. Fields:
+    - HelperURL
+    - Model
+    - ApiToken
+    - Network
+    - LlmOptions
 
-## SummarizeProject
-This function takes a ProjectConfig struct and a file map as input. It initializes a summary content string, iterates through the file map, appends each file and its summary to the summary content, calls the SummarizeRequest method with the project's SummaryPrompt and the summary content, and returns the result and any error encountered.
+### CodeSummaryRequest and SummarizeRequest functions in pkg/summarizer/service.go
+1. Takes prompt and content as input.
+2. Calls helper.GenerateContentInstruction with prompt+"```"+content+"```" or prompt+"\n\n"+content.
+3. Returns response and error.
 
-## SummarizeProjectFiles
-This function takes a ProjectConfig struct as input and initializes a file map. It calls filepath.WalkDir with the project's RootPath, iterates through the files, filters them based on the project's FileFilter, reads the file content, calculates the relative path, calls the CodeSummaryRequest method with the project's CodePrompt and the file content, and stores the response in the file map. Finally, it returns the file map and any error encountered.
+### SummarizeReadme, SummarizeProject, and SummarizeProjectFiles functions in pkg/summarizer/summarizer.go
+1. SummarizeReadme:
+    - Prints "Readme:".
+    - Calls SummarizeRequest with projectConfig.ReadmePrompt and summaryContent.
+    - Returns the result of SummarizeRequest and nil.
+2. SummarizeProject:
+    - Initializes summaryContent as an empty string.
+    - Iterates through fileMap and appends each file and its summary to summaryContent.
+    - Prints "Summary:".
+    - Calls SummarizeRequest with projectConfig.SummaryPrompt and summaryContent.
+    - Returns the result of SummarizeRequest and nil.
+3. SummarizeProjectFiles:
+    - Initializes fileMap as an empty map.
+    - Calls filepath.WalkDir with projectConfig.RootPath and a callback function.
+    - Callback function iterates through each file in the directory.
+    - For each file, it checks if the file name matches any of the filters in projectConfig.FileFilter.
+    - If a match is found, it reads the file content, calculates the relative path, and calls CodeSummaryRequest with projectConfig.CodePrompt and the file content.
+    - The result of CodeSummaryRequest is stored in fileMap.
+    - Returns fileMap and nil.
 

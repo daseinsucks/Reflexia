@@ -1,23 +1,37 @@
 # Reflexia
 
-Reflexia is a command-line tool that summarizes the contents of a given project directory. It takes a GitHub link or a directory path as input and uses an external API to generate summaries of the project's code, project, and README files. The tool creates two output files: README_GENERATED.md and SUMMARY.md, which contain the generated summaries.
+Reflexia is a command-line tool that analyzes and summarizes code files within a given directory. It uses an external summarization service to generate summaries for each file and then combines these summaries into a project-level summary. The tool also generates a README file based on the project summary and file summaries.
 
 ## Configuration
 
-- Set the environment variables: PWD, HELPER_URL, MODEL, API_TOKEN, GH_TOKEN
-- Provide the GitHub link or directory path as a command-line argument:
-    - `-g` (GitHub link)
-    - `-u` (GitHub username)
-    - `-t` (GitHub token)
+1. Set environment variables:
+    - `GH_LINK`: Valid link for the GitHub repository
+    - `GH_USERNAME`: GitHub username for SSH authentication
+    - `GH_TOKEN`: GitHub token for SSH authentication
+
+2. Create a `.env` file in the project directory and add the environment variables.
 
 ## Run Instructions
 
-1. Clone the repository: `git clone <repository_url>`
-2. Navigate to the project directory: `cd reflexia`
-3. Run the tool: `go run cmd/reflexia/reflexia.go -g <github_link> -u <github_username> -t <github_token>`
+1. Clone the repository to a local directory.
+2. Run the following command:
 
-Alternatively, if you have the directory path, you can run:
+```bash
+go run cmd/reflexia/reflexia.go -g <GH_LINK> -u <GH_USERNAME> -t <GH_TOKEN>
+```
 
-4. Run the tool: `go run cmd/reflexia/reflexia.go <directory_path>`
+3. The tool will analyze the code files in the specified directory and generate a project summary, file summaries, and a README file.
 
-This will generate the README_GENERATED.md and SUMMARY.md files containing the summaries of the project's code, project, and README files.
+## Optional Flags
+
+- `-c`: Do not check project root folder specific files such as go.mod or package.json
+- `-s`: Do not create SUMMARY.md and README.md, just print the file summaries
+- `-r`: Do not create README.md
+
+## Output
+
+The tool will generate the following files:
+
+- `SUMMARY.md`: Project summary
+- `README_GENERATED.md`: README file based on the project summary and file summaries
+

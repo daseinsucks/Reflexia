@@ -10,9 +10,9 @@ import (
 )
 
 const DefaultCodePrompt = `
-Your main task is to compress and simplify the provided code logic and save output space.
-Reduct your output as much as possible, yet don't lose original namings.
-Do not lose the details, such as trivial code logic or edge case processing.
+Describe each code symbol in short form as in the examples below.
+Reduct your output as much as possible.
+Don't lose original namings.
 Always specify environment variables, cli arguments, flags, anything that can configure application behaviour.
 Always omit empty sections! Write about section only if they present!
 Always omit already written external references!
@@ -33,6 +33,12 @@ struct FooBar {
 	Foo string
 	Bar string
 }
+
+func SomeFunc() {
+	// Unimplemented
+	// TODO: implement SomeFunc
+}
+
 func main() {
 	foobar := FooBar{
 		Foo: "foo",
@@ -43,6 +49,7 @@ func main() {
 	fmt.Println(foobar.Foo + foobar.Bar + os.Getenv("BAZ") + zab + zoob)
 	// Reverse of above output
 	fmt.Println("boozbazZABraboff")
+	//fmt.Println("TEST")
 }
 ` + "```" + `
 
@@ -55,6 +62,8 @@ var:
 	- zab: "zab"
 const:
 	- zoob: "zoob"
+
+func SomeFunc(): unimplemented
 func main():
 	- assigns var foobar with FooBar struct with fields Foo: "foo", Bar: "bar"
 	- prints current working directory
@@ -120,7 +129,7 @@ type ProjectConfig struct {
 	RootPath          string
 }
 
-func GetProjectConfig(currentDirectory string) *ProjectConfig {
+func GetProjectConfig(currentDirectory string, lightCheck bool) *ProjectConfig {
 	// TODO: read that from configuration file(s)
 	for _, config := range []ProjectConfig{
 		ProjectConfig{
@@ -150,7 +159,10 @@ func GetProjectConfig(currentDirectory string) *ProjectConfig {
 			RootPath:          currentDirectory,
 		},
 	} {
-		if hasFilterFiles(currentDirectory, config.FileFilter) ||
+		if lightCheck && hasFilterFiles(currentDirectory, config.FileFilter) {
+			return &config
+		}
+		if hasFilterFiles(currentDirectory, config.FileFilter) &&
 			hasRootFilterFile(currentDirectory, config.ProjectRootFilter) {
 			return &config
 		}

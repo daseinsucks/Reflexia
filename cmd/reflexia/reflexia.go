@@ -27,6 +27,27 @@ func main() {
 	ghUsername := flag.String("u", "", "github username for ssh auth")
 	ghToken := os.Getenv("GH_TOKEN")
 	flag.StringVar(&ghToken, "t", ghToken, "github token for ssh auth")
+	lightCheck := false
+	noSummary := false
+	noReadme := false
+	flag.BoolFunc("c",
+		"do not check project root folder specific files such as go.mod or package.json",
+		func(_ string) error {
+			lightCheck = true
+			return nil
+		})
+	flag.BoolFunc("s",
+		"do not create SUMMARY.md and README.md, just print the file summaries",
+		func(_ string) error {
+			noSummary = true
+			return nil
+		})
+	flag.BoolFunc("r",
+		"do not create README.md",
+		func(_ string) error {
+			noReadme = true
+			return nil
+		})
 	flag.Parse()
 
 	dirPath, err := processWorkingDirectory(*ghLink, *ghUsername, ghToken)
@@ -48,47 +69,52 @@ func main() {
 			llms.WithRepetitionPenalty(0.7),
 		},
 	}
-	projectConfig := project.GetProjectConfig(dirPath)
+	projectConfig := project.GetProjectConfig(dirPath, lightCheck)
 
 	fileMap, err := summarizerService.SummarizeProjectFiles(projectConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// TODO: make summary for each package (maybe directory separated)
-	summaryContent, err := summarizerService.SummarizeProject(projectConfig, fileMap)
-	if err != nil {
-		log.Fatal(err)
-	}
-	readmeContent, err := summarizerService.SummarizeReadme(projectConfig, summaryContent)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	readmeFilename := "README_GENERATED.md"
-	if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
-		if os.IsNotExist(err) {
-			readmeFilename = "README.md"
-		} else {
+	if !noSummary {
+		// TODO: make summary for each package (maybe directory separated)
+		summaryContent, err := summarizerService.SummarizeProject(projectConfig, fileMap)
+		if err != nil {
 			log.Fatal(err)
 		}
-	}
-	readmeFile, err := os.Create(filepath.Join(dirPath, readmeFilename))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer readmeFile.Close()
 
-	summaryFile, err := os.Create(filepath.Join(dirPath, "SUMMARY.md"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer summaryFile.Close()
+		summaryFile, err := os.Create(filepath.Join(dirPath, "SUMMARY.md"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer summaryFile.Close()
 
-	if _, err = readmeFile.WriteString(readmeContent); err != nil {
-		log.Fatal(err)
-	}
-	if _, err = summaryFile.WriteString(summaryContent); err != nil {
-		log.Fatal(err)
+		if _, err = summaryFile.WriteString(summaryContent); err != nil {
+			log.Fatal(err)
+		}
+
+		if !noReadme {
+			readmeContent, err := summarizerService.SummarizeReadme(projectConfig, summaryContent)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			readmeFilename := "README_GENERATED.md"
+			if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
+				if os.IsNotExist(err) {
+					readmeFilename = "README.md"
+				} else {
+					log.Fatal(err)
+				}
+			}
+			readmeFile, err := os.Create(filepath.Join(dirPath, readmeFilename))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer readmeFile.Close()
+			if _, err = readmeFile.WriteString(readmeContent); err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }
 
@@ -141,8 +167,8 @@ func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error)
 				return "", err
 			}
 		}
-	} else if len(os.Args) > 1 {
-		dirPath = os.Args[1]
+	} else if len(flag.Args()) > 0 {
+		dirPath = flag.Arg(0)
 		if _, err := os.Stat(dirPath); err != nil {
 			return "", err
 		}
