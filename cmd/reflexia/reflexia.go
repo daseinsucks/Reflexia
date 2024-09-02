@@ -1,111 +1,160 @@
 package main
 
 import (
-	"fmt"
-	"io/fs"
+	"errors"
+	"flag"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/joho/godotenv"
+	"github.com/tmc/langchaingo/llms"
 
-	"reflexia/internal/project"
-	"reflexia/internal/summarizer"
+	"reflexia/pkg/project"
+	"reflexia/pkg/summarizer"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal(err)
 	}
-	dirPath := loadEnv("PWD")
+
+	ghLink := flag.String("g", "", "valid link for github repository")
+	ghUsername := flag.String("u", "", "github username for ssh auth")
+	ghToken := os.Getenv("GH_TOKEN")
+	flag.StringVar(&ghToken, "t", ghToken, "github token for ssh auth")
+	flag.Parse()
+
+	dirPath, err := processWorkingDirectory(*ghLink, *ghUsername, ghToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	summarizerService := &summarizer.SummarizerService{
 		HelperURL: loadEnv("HELPER_URL"),
 		Model:     loadEnv("MODEL"),
 		ApiToken:  loadEnv("API_TOKEN"),
 		Network:   "local",
+		LlmOptions: []llms.CallOption{
+			llms.WithStopWords(
+				[]string{
+					"<end_of_summary>",
+				},
+			),
+			llms.WithRepetitionPenalty(0.7),
+		},
 	}
 	projectConfig := project.GetProjectConfig(dirPath)
-	fileMap := map[string]string{}
 
-	err := filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		for _, filter := range projectConfig.FileFilter {
-			if strings.HasSuffix(d.Name(), filter) {
-				content, err := os.ReadFile(path)
-				if err != nil {
-					log.Fatal(err)
-				}
-				relPath, err := filepath.Rel(dirPath, path)
-				if err != nil {
-					log.Fatal(err)
-				}
-				fmt.Println(relPath)
-				response, err := summarizerService.CodeSummaryRequest(
-					projectConfig.CodePrompt, string(content))
-				fmt.Printf("\n")
-				fileMap[relPath] = response
-				if err != nil {
-					log.Fatal(err)
-				}
-				break
-			}
-		}
-		return nil
-	})
+	fileMap, err := summarizerService.SummarizeProjectFiles(projectConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	content := ""
-	for file, summary := range fileMap {
-		content += file + "\n" + summary + "\n\n"
-	}
-	fmt.Println("Summary:")
-	summary, err := summarizerService.SummarizeRequest(projectConfig.SummaryPrompt, content)
+	// TODO: make summary for each package (maybe directory separated)
+	summaryContent, err := summarizerService.SummarizeProject(projectConfig, fileMap)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("\n")
-
-	fmt.Println("Readme:")
-	readme, err := summarizerService.SummarizeRequest(projectConfig.ReadmePrompt, summary)
+	readmeContent, err := summarizerService.SummarizeReadme(projectConfig, summaryContent)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	readmeFilename := "README_GENERATED.md"
 	if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
-		readmeFilename = "README.md"
+		if os.IsNotExist(err) {
+			readmeFilename = "README.md"
+		} else {
+			log.Fatal(err)
+		}
 	}
-	readmeFile, err := os.Create(readmeFilename)
+	readmeFile, err := os.Create(filepath.Join(dirPath, readmeFilename))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer readmeFile.Close()
 
-	summaryFile, err := os.Create("SUMMARY.md")
+	summaryFile, err := os.Create(filepath.Join(dirPath, "SUMMARY.md"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer summaryFile.Close()
 
-	if _, err = readmeFile.WriteString(readme); err != nil {
+	if _, err = readmeFile.WriteString(readmeContent); err != nil {
 		log.Fatal(err)
 	}
-	if _, err = summaryFile.WriteString(summary); err != nil {
+	if _, err = summaryFile.WriteString(summaryContent); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func loadEnv(key string) string {
-	if value := os.Getenv(key); value == "" {
-		log.Fatalf("empty environment key %s", key)
-	} else {
-		return value
+func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error) {
+	dirPath := loadEnv("PWD")
+
+	if ghLink != "" {
+		u, err := url.ParseRequestURI(ghLink)
+		if err != nil {
+			return "", err
+		}
+
+		sPath := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
+		if len(sPath) != 2 {
+			return "", errors.New("github repository url does not have two path elements")
+		}
+
+		tempDirEl := []string{dirPath, "temp"}
+		tempDirEl = append(tempDirEl, sPath...)
+		tempDir := filepath.Join(tempDirEl...)
+
+		dirPath = tempDir
+
+		if _, err := os.Stat(dirPath); err != nil {
+			if os.IsNotExist(err) {
+				if err := os.MkdirAll(dirPath, os.FileMode(0755)); err != nil {
+					return "", err
+				}
+
+				cloneOptions := git.CloneOptions{
+					URL:               ghLink,
+					RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+					Depth:             1,
+				}
+				if ghUsername != "" && ghToken != "" {
+					cloneOptions.Auth = &http.BasicAuth{
+						Username: ghUsername,
+						Password: ghToken,
+					}
+				}
+
+				if _, err := git.PlainClone(dirPath, false, &cloneOptions); err != nil {
+					if err := os.RemoveAll(dirPath); err != nil {
+						return "", err
+					}
+					return "", err
+				}
+
+			} else {
+				return "", err
+			}
+		}
+	} else if len(os.Args) > 1 {
+		dirPath = os.Args[1]
+		if _, err := os.Stat(dirPath); err != nil {
+			return "", err
+		}
 	}
 
-	return ""
+	return dirPath, nil
+}
+
+func loadEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("empty environment key %s", key)
+	}
+	return value
 }

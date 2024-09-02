@@ -10,21 +10,25 @@ import (
 )
 
 const DefaultCodePrompt = `
-Compress the provided code logic to save the llm context space.
+Your main task is to compress and simplify the provided code logic and save output space.
+Reduct your output as much as possible, yet don't lose original namings.
 Do not lose the details, such as trivial code logic or edge case processing.
-If you see any possibility to include the information about external configuration such as environment variables or config files - include them in a separate list like on example below.
-Don't confuse the struct fields and os.Getenv calls or something similar when doing such lists.
-Don't write the group section if it's empty, save the space!
-Your output will be used for summarizing the whole project file by file.
+Always specify environment variables, cli arguments, flags, anything that can configure application behaviour.
+Always omit empty sections! Write about section only if they present!
+Always omit already written external references!
 It is mandatory to prepend the <end_of_summary> at the very end of your output.
 
 Example input:
 ` + "```" + `
-package main
+package foobar
 import (
 	"fmt"
 	"os"
 )
+
+var zab = "zab"
+const zoob = "zoob"
+
 struct FooBar {
 	Foo string
 	Bar string
@@ -34,22 +38,52 @@ func main() {
 		Foo: "foo",
 		Bar: "bar"
 	}
-	fmt.Println(foobar.Foo + foobar.Bar + os.Getenv("BAZ"))
+	// Print current directory
+	fmt.Println(os.Getenv("PWD"))
+	fmt.Println(foobar.Foo + foobar.Bar + os.Getenv("BAZ") + zab + zoob)
+	// Reverse of above output
+	fmt.Println("boozbazZABraboff")
 }
 ` + "```" + `
 
 Example output:
+package foobar
+
 struct FooBar:
 	- Fields: Foo, Bar
+var:
+	- zab: "zab"
+const:
+	- zoob: "zoob"
 func main():
 	- assigns var foobar with FooBar struct with fields Foo: "foo", Bar: "bar"
-	- prints foobar.Foo + foobar.Bar + environment variable "BAZ"
+	- prints current working directory
+	- prints foobar.Foo + foobar.Bar + environment variable "BAZ" + var zab + const zoob
+	- prints "boozbazZABraboff" which is reverse of above output
 
-external references:
-	- fmt.Println
-	- os.Getenv
-environment variables:
-	- "BAZ"
+environment variables: "PWD", "BAZ"
+external references: fmt.Println, os.Getenv
+<end_of_summary>
+
+Example input:
+` + "```" + `
+package main
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Hello world!")
+}
+` + "```" + `
+
+Example output:
+package main
+
+func main():
+	- prints "Hello world!"
+
+external references: fmt.Println
 <end_of_summary>
 
 Provided code:
@@ -58,8 +92,10 @@ Provided code:
 const DefaultSummaryPrompt = `
 Based on provided input from summary of project files create a markdown summary of what that project code does.
 First write a short summary about provided project code summary.
-Always specify which environment variables can be used for configuration.
-Always include filenames. Try to guess the project name from them if possible.
+Always specify which environment variables, flags, cmdline arguments can be used for configuration.
+Always specify the edgecases of how application can be launched.
+Try to guess the project name from the filenames if possible.
+Write out all file names as a project structure.
 Then write summary about every major code part, group it with markdown headers.
 Try to explain relations between code entities, try to find unclear places, possibly dead code.		
 If unclear places or dead code are not present - don't write anything about their absense.
@@ -81,10 +117,11 @@ type ProjectConfig struct {
 	CodePrompt        string
 	SummaryPrompt     string
 	ReadmePrompt      string
+	RootPath          string
 }
 
 func GetProjectConfig(currentDirectory string) *ProjectConfig {
-
+	// TODO: read that from configuration file(s)
 	for _, config := range []ProjectConfig{
 		ProjectConfig{
 			FileFilter:        []string{".go"},
@@ -92,6 +129,7 @@ func GetProjectConfig(currentDirectory string) *ProjectConfig {
 			CodePrompt:        DefaultCodePrompt,
 			SummaryPrompt:     DefaultSummaryPrompt,
 			ReadmePrompt:      DefaultReadmePrompt,
+			RootPath:          currentDirectory,
 		},
 
 		ProjectConfig{
@@ -100,6 +138,7 @@ func GetProjectConfig(currentDirectory string) *ProjectConfig {
 			CodePrompt:        DefaultCodePrompt,
 			SummaryPrompt:     DefaultSummaryPrompt,
 			ReadmePrompt:      DefaultReadmePrompt,
+			RootPath:          currentDirectory,
 		},
 
 		ProjectConfig{
@@ -108,6 +147,7 @@ func GetProjectConfig(currentDirectory string) *ProjectConfig {
 			CodePrompt:        DefaultCodePrompt,
 			SummaryPrompt:     DefaultSummaryPrompt,
 			ReadmePrompt:      DefaultReadmePrompt,
+			RootPath:          currentDirectory,
 		},
 	} {
 		if hasFilterFiles(currentDirectory, config.FileFilter) &&
@@ -146,6 +186,9 @@ func hasFilterFiles(dirPath string, filters []string) bool {
 func hasRootFilterFile(dirPath string, filters []string) bool {
 	for _, filter := range filters {
 		if _, err := os.Stat(filepath.Join(dirPath, filter)); err != nil {
+			if !os.IsNotExist(err) {
+				panic(err)
+			}
 			return false
 		}
 	}

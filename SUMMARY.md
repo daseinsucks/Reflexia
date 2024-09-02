@@ -1,37 +1,35 @@
-The provided project code is a code summarizer that takes a directory of files as input and generates a summary of the code in each file. It uses an external summarizer service to perform the actual summarization. The project is named "reflexia" based on the filenames provided.
+The provided project code is a command-line tool that summarizes the contents of a given project directory. It takes a GitHub link or a directory path as input and uses an external API to generate summaries of the project's code, project, and README files. The tool also creates two output files: README_GENERATED.md and SUMMARY.md, which contain the generated summaries.
 
-The project uses the following environment variables for configuration:
-- PWD
-- HELPER_URL
-- MODEL
-- API_TOKEN
+Project structure:
+- cmd/reflexia/reflexia.go
+- pkg/project/project.go
+- pkg/summarizer/service.go
+- pkg/summarizer/summarizer.go
 
-## Project Structure
+Environment variables: PWD, HELPER_URL, MODEL, API_TOKEN, GH_TOKEN
+CLI arguments: -g (github link), -u (github username), -t (github token)
 
-The project consists of three main parts:
-1. cmd/reflexia/reflexia.go
-2. internal/project/project.go
-3. internal/summarizer/summarize.go
+## SummarizerService
+The SummarizerService struct contains the necessary information for interacting with the external API, including the helper URL, model, API token, network, and LLM options.
 
-## cmd/reflexia/reflexia.go
+## processWorkingDirectory
+This function takes a GitHub link, GitHub username, and GitHub token as input and returns the directory path of the project. If a GitHub link is provided, it parses the link, extracts the repository path, creates a temporary directory, and clones the repository using the provided credentials. If no GitHub link is provided, it takes the first command-line argument as the directory path.
 
-This file contains the main function of the project. It loads environment variables using godotenv.Load(), sets up a SummarizerService with values from the environment variables, and gets the project configuration using project.GetProjectConfig().
+## loadEnv
+This function loads the value of a given environment variable.
 
-The main function then iterates through files in the project directory using filepath.WalkDir. For each file, it checks if it matches any of the file filters in the project configuration. If a match is found, it reads the file content, calculates the relative path, and sends a code summary request to the summarizer service. The summary is stored in a map with the relative path as the key.
+## main
+The main function loads environment variables, parses command-line arguments, calls processWorkingDirectory to get the directory path, creates a SummarizerService instance, gets the project configuration, summarizes the project files, project, and README, and writes the summaries to the output files.
 
-After processing all files, the main function generates a summary of all summaries using the summarizer service and writes it to a file named "SUMMARY.md". It also generates a readme using the summary and writes it to a file named "README_GENERATED.md" or "README.md" if a README.md file already exists.
+## GetProjectConfig
+This function iterates through predefined ProjectConfig structs and checks if the current directory contains files matching the FileFilter and ProjectRootFilter. If a match is found, it returns the corresponding ProjectConfig struct. Otherwise, it logs an error and returns an empty ProjectConfig struct.
 
-## internal/project/project.go
+## SummarizeReadme
+This function takes a ProjectConfig struct and a summary content string as input and calls the SummarizeRequest method with the project's ReadmePrompt and the summary content. It returns the result and any error encountered.
 
-This file contains the ProjectConfig struct and functions to get the project configuration based on the current directory. The ProjectConfig struct has fields for FileFilter, ProjectRootFilter, CodePrompt, SummaryPrompt, and ReadmePrompt.
+## SummarizeProject
+This function takes a ProjectConfig struct and a file map as input. It initializes a summary content string, iterates through the file map, appends each file and its summary to the summary content, calls the SummarizeRequest method with the project's SummaryPrompt and the summary content, and returns the result and any error encountered.
 
-The GetProjectConfig function iterates through predefined ProjectConfig structs and checks if the current directory contains files matching the FileFilter and ProjectRootFilter. If a match is found, it returns the matching ProjectConfig struct. If no match is found, it logs an error and returns an empty ProjectConfig struct.
-
-The hasFilterFiles and hasRootFilterFile functions are used to check if any files matching the filters exist in the directory.
-
-## internal/summarizer/summarize.go
-
-This file contains the SummarizerService struct and functions to perform code summarization and content summarization. The SummarizerService struct has fields for HelperURL, Model, ApiToken, and Network.
-
-The CodeSummaryRequest and SummarizeRequest functions call helper.GenerateContentInstruction with the appropriate prompt and content. They use the SummarizerService's HelperURL, Model, ApiToken, Network, and llmOptions to perform the summarization.
+## SummarizeProjectFiles
+This function takes a ProjectConfig struct as input and initializes a file map. It calls filepath.WalkDir with the project's RootPath, iterates through the files, filters them based on the project's FileFilter, reads the file content, calculates the relative path, calls the CodeSummaryRequest method with the project's CodePrompt and the file content, and stores the response in the file map. Finally, it returns the file map and any error encountered.
 
