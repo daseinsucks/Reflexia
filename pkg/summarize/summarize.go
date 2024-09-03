@@ -1,4 +1,4 @@
-package summarizer
+package summarize
 
 import (
 	"fmt"
@@ -8,33 +8,37 @@ import (
 	util "reflexia/internal"
 	"reflexia/pkg/project"
 	"strings"
+
+	helper "github.com/JackBekket/hellper/lib/langchain"
+	"github.com/tmc/langchaingo/llms"
 )
 
-func (s *SummarizerService) CreateReadme(
-	projectConfig *project.ProjectConfig,
-	summaryContent string,
-) (string, error) {
-	fmt.Println("Readme:")
-	// We are doing print stuff since the llm library prints results to the console
-	readmeContent, err := s.SummarizeRequest(projectConfig.ReadmePrompt, summaryContent)
-	if err != nil {
-		return "", err
-	}
-	return readmeContent, nil
+type SummarizerService struct {
+	HelperURL  string
+	Model      string
+	ApiToken   string
+	Network    string
+	LlmOptions []llms.CallOption
 }
 
-func (s *SummarizerService) SummarizeProject(
-	projectConfig *project.ProjectConfig,
-	codeContent string,
-) (string, error) {
-	fmt.Println("Summary:")
-	// We are doing print stuff since the llm library prints results to the console
-	summary, err := s.SummarizeRequest(projectConfig.SummaryPrompt, codeContent)
-	if err != nil {
-		return "", err
-	}
+func (s *SummarizerService) CodeSummaryRequest(prompt, content string) (string, error) {
+	response, err := helper.GenerateContentInstruction(s.HelperURL,
+		prompt+"```"+content+"```",
+		s.Model, s.ApiToken, s.Network,
+		s.LlmOptions...,
+	)
 
-	return summary, nil
+	return response, err
+}
+
+func (s *SummarizerService) SummarizeRequest(prompt, content string) (string, error) {
+	response, err := helper.GenerateContentInstruction(s.HelperURL,
+		prompt+"\n\n"+content,
+		s.Model, s.ApiToken, s.Network,
+		s.LlmOptions...,
+	)
+
+	return response, err
 }
 
 func (s *SummarizerService) SummarizeCode(

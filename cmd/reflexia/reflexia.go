@@ -17,7 +17,7 @@ import (
 
 	util "reflexia/internal"
 	"reflexia/pkg/project"
-	"reflexia/pkg/summarizer"
+	"reflexia/pkg/summarize"
 )
 
 type Config struct {
@@ -43,7 +43,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	summarizerService := &summarizer.SummarizerService{
+	summarizeService := &summarize.SummarizerService{
 		HelperURL: util.LoadEnv("HELPER_URL"),
 		Model:     util.LoadEnv("MODEL"),
 		ApiToken:  util.LoadEnv("API_TOKEN"),
@@ -59,7 +59,7 @@ func main() {
 	}
 	projectConfig := project.GetProjectConfig(dirPath, config.LightCheck)
 
-	fileMap, err := summarizerService.SummarizeCode(projectConfig)
+	fileMap, err := summarizeService.SummarizeCode(projectConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func main() {
 					}
 				}
 
-				pkgSummaryContent, err := summarizerService.SummarizeRequest(
+				pkgSummaryContent, err := summarizeService.SummarizeRequest(
 					projectConfig.PackagePrompt, fileMapToString(pkgFileMap),
 				)
 				if err != nil {
@@ -117,7 +117,7 @@ func main() {
 
 		fmt.Println("\nSummary: ")
 
-		summaryContent, err := summarizerService.SummarizeRequest(
+		summaryContent, err := summarizeService.SummarizeRequest(
 			projectConfig.SummaryPrompt, fileMapToString(fileMap),
 		)
 		if err != nil {
@@ -131,7 +131,7 @@ func main() {
 		if !config.NoReadme {
 			fmt.Println("\nReadme: ")
 
-			readmeContent, err := summarizerService.SummarizeRequest(
+			readmeContent, err := summarizeService.SummarizeRequest(
 				projectConfig.ReadmePrompt, summaryContent,
 			)
 			if err != nil {
