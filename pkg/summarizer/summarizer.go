@@ -5,15 +5,17 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	util "reflexia/internal"
 	"reflexia/pkg/project"
 	"strings"
 )
 
-func (s *SummarizerService) SummarizeReadme(
+func (s *SummarizerService) CreateReadme(
 	projectConfig *project.ProjectConfig,
 	summaryContent string,
 ) (string, error) {
 	fmt.Println("Readme:")
+	// We are doing print stuff since the llm library prints results to the console
 	readmeContent, err := s.SummarizeRequest(projectConfig.ReadmePrompt, summaryContent)
 	if err != nil {
 		return "", err
@@ -23,42 +25,32 @@ func (s *SummarizerService) SummarizeReadme(
 
 func (s *SummarizerService) SummarizeProject(
 	projectConfig *project.ProjectConfig,
-	fileMap map[string]string,
+	codeContent string,
 ) (string, error) {
-	summaryContent := ""
-	for file, summary := range fileMap {
-		summaryContent += file + "\n" + summary + "\n\n"
-	}
 	fmt.Println("Summary:")
 	// We are doing print stuff since the llm library prints results to the console
-	summary, err := s.SummarizeRequest(projectConfig.SummaryPrompt, summaryContent)
+	summary, err := s.SummarizeRequest(projectConfig.SummaryPrompt, codeContent)
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("\n")
 
 	return summary, nil
 }
 
-func (s *SummarizerService) SummarizeProjectFiles(
+func (s *SummarizerService) SummarizeCode(
 	projectConfig *project.ProjectConfig,
 ) (map[string]string, error) {
 
 	fileMap := map[string]string{}
 
-	// TODO: add .gitignore support
-	if err := filepath.WalkDir(
+	if err := util.WalkDirIgnored(
 		projectConfig.RootPath,
-		func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
+		func(path string, d fs.DirEntry) error {
 			for _, filter := range projectConfig.FileFilter {
 				if strings.HasSuffix(d.Name(), filter) {
 					content, err := os.ReadFile(path)
 					if err != nil {
 						return err
-
 					}
 					relPath, err := filepath.Rel(projectConfig.RootPath, path)
 					if err != nil {

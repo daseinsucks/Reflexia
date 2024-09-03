@@ -3,123 +3,187 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms"
 
+	util "reflexia/internal"
 	"reflexia/pkg/project"
 	"reflexia/pkg/summarizer"
 )
 
+type Config struct {
+	GithubLink       *string
+	GithubUsername   *string
+	GithubToken      *string
+	LightCheck       bool
+	NoSummary        bool
+	NoReadme         bool
+	NoPackageSummary bool
+	WithFileSummary  bool
+}
+
 func main() {
-	if err := godotenv.Load(); err != nil {
+	config, err := initConfig()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	ghLink := flag.String("g", "", "valid link for github repository")
-	ghUsername := flag.String("u", "", "github username for ssh auth")
-	ghToken := os.Getenv("GH_TOKEN")
-	flag.StringVar(&ghToken, "t", ghToken, "github token for ssh auth")
-	lightCheck := false
-	noSummary := false
-	noReadme := false
-	flag.BoolFunc("c",
-		"do not check project root folder specific files such as go.mod or package.json",
-		func(_ string) error {
-			lightCheck = true
-			return nil
-		})
-	flag.BoolFunc("s",
-		"do not create SUMMARY.md and README.md, just print the file summaries",
-		func(_ string) error {
-			noSummary = true
-			return nil
-		})
-	flag.BoolFunc("r",
-		"do not create README.md",
-		func(_ string) error {
-			noReadme = true
-			return nil
-		})
-	flag.Parse()
-
-	dirPath, err := processWorkingDirectory(*ghLink, *ghUsername, ghToken)
+	dirPath, err := processWorkingDirectory(
+		*config.GithubLink, *config.GithubUsername, *config.GithubToken)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	summarizerService := &summarizer.SummarizerService{
-		HelperURL: loadEnv("HELPER_URL"),
-		Model:     loadEnv("MODEL"),
-		ApiToken:  loadEnv("API_TOKEN"),
+		HelperURL: util.LoadEnv("HELPER_URL"),
+		Model:     util.LoadEnv("MODEL"),
+		ApiToken:  util.LoadEnv("API_TOKEN"),
 		Network:   "local",
 		LlmOptions: []llms.CallOption{
 			llms.WithStopWords(
 				[]string{
-					"<end_of_summary>",
+					util.LoadEnv("STOP_WORD"),
 				},
 			),
 			llms.WithRepetitionPenalty(0.7),
 		},
 	}
-	projectConfig := project.GetProjectConfig(dirPath, lightCheck)
+	projectConfig := project.GetProjectConfig(dirPath, config.LightCheck)
 
-	fileMap, err := summarizerService.SummarizeProjectFiles(projectConfig)
+	fileMap, err := summarizerService.SummarizeCode(projectConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !noSummary {
-		// TODO: make summary for each package (maybe directory separated)
-		summaryContent, err := summarizerService.SummarizeProject(projectConfig, fileMap)
-		if err != nil {
+	if config.WithFileSummary {
+		if err := writeFile(
+			filepath.Join(dirPath, "FILES.md"),
+			fileMapToString(fileMap),
+		); err != nil {
 			log.Fatal(err)
 		}
+	}
 
-		summaryFile, err := os.Create(filepath.Join(dirPath, "SUMMARY.md"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer summaryFile.Close()
-
-		if _, err = summaryFile.WriteString(summaryContent); err != nil {
-			log.Fatal(err)
-		}
-
-		if !noReadme {
-			readmeContent, err := summarizerService.SummarizeReadme(projectConfig, summaryContent)
+	if !config.NoSummary {
+		if !config.NoPackageSummary {
+			pkgFiles, err := projectConfig.BuildPackageFiles()
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			readmeFilename := "README_GENERATED.md"
-			if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
-				if os.IsNotExist(err) {
-					readmeFilename = "README.md"
-				} else {
+			for pkg, files := range pkgFiles {
+				fmt.Printf("\n%s:\n", pkg)
+
+				pkgFileMap := map[string]string{}
+				pkgDir := ""
+				for file, content := range fileMap {
+					if slices.Contains(files, file) {
+						pkgFileMap[file] = content
+						if pkgDir == "" {
+							pkgDir = filepath.Base(filepath.Dir(file))
+						}
+					}
+				}
+
+				pkgSummaryContent, err := summarizerService.SummarizeRequest(
+					projectConfig.PackagePrompt, fileMapToString(pkgFileMap),
+				)
+				if err != nil {
 					log.Fatal(err)
 				}
+
+				dirPath = filepath.Join(dirPath, pkgDir)
+				readmeFilename, err := getReadmePath(dirPath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if err := writeFile(
+					filepath.Join(dirPath, readmeFilename),
+					pkgSummaryContent,
+				); err != nil {
+					log.Fatal(err)
+				}
+
 			}
-			readmeFile, err := os.Create(filepath.Join(dirPath, readmeFilename))
+		}
+
+		fmt.Println("\nSummary: ")
+
+		summaryContent, err := summarizerService.SummarizeRequest(
+			projectConfig.SummaryPrompt, fileMapToString(fileMap),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := writeFile(
+			filepath.Join(dirPath, "SUMMARY.md"), summaryContent); err != nil {
+			log.Fatal(err)
+		}
+
+		if !config.NoReadme {
+			fmt.Println("\nReadme: ")
+
+			readmeContent, err := summarizerService.SummarizeRequest(
+				projectConfig.ReadmePrompt, summaryContent,
+			)
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer readmeFile.Close()
-			if _, err = readmeFile.WriteString(readmeContent); err != nil {
+
+			readmeFilename, err := getReadmePath(dirPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := writeFile(
+				filepath.Join(dirPath, readmeFilename), readmeContent); err != nil {
 				log.Fatal(err)
 			}
 		}
 	}
 }
 
+func fileMapToString(fileMap map[string]string) string {
+	content := ""
+	for file, summary := range fileMap {
+		content += file + "\n" + summary + "\n\n"
+	}
+	return content
+}
+
+func getReadmePath(dirPath string) (string, error) {
+	readmeFilename := "README_GENERATED.md"
+	if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
+		if os.IsNotExist(err) {
+			readmeFilename = "README.md"
+		} else {
+			return "", err
+		}
+	}
+	return readmeFilename, nil
+}
+
+func writeFile(path, content string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.WriteString(content); err != nil {
+		return err
+	}
+	return nil
+}
+
 func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error) {
-	dirPath := loadEnv("PWD")
+	dirPath := util.LoadEnv("PWD")
 
 	if ghLink != "" {
 		u, err := url.ParseRequestURI(ghLink)
@@ -177,10 +241,59 @@ func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error)
 	return dirPath, nil
 }
 
-func loadEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Fatalf("empty environment key %s", key)
-	}
-	return value
+func initConfig() (*Config, error) {
+	// Temporary moved to util.LoadEnv, until we move stop words to the toml files
+	// if err := godotenv.Load(); err != nil {
+	// 	return nil, err
+	// }
+
+	config := Config{}
+
+	config.GithubLink = flag.String("g", "", "valid link for github repository")
+	config.GithubUsername = flag.String("u", "", "github username for ssh auth")
+
+	githubToken := os.Getenv("GH_TOKEN")
+	config.GithubToken = &githubToken
+	flag.StringVar(config.GithubToken, "t", *config.GithubToken, "github token for ssh auth")
+
+	config.LightCheck = false
+	config.NoSummary = false
+	config.NoReadme = false
+	config.NoPackageSummary = false
+	config.WithFileSummary = false
+
+	flag.BoolFunc("c",
+		"do not check project root folder specific files such as go.mod or package.json",
+		func(_ string) error {
+			config.LightCheck = true
+			return nil
+		})
+	flag.BoolFunc("s",
+		"do not create SUMMARY.md and README.md, just print the file summaries",
+		func(_ string) error {
+			config.NoSummary = true
+			return nil
+		})
+	flag.BoolFunc("r",
+		"do not create README.md",
+		func(_ string) error {
+			config.NoReadme = true
+			return nil
+		})
+	flag.BoolFunc("p",
+		"do not create README.md for every package in the project",
+		func(_ string) error {
+			config.NoPackageSummary = true
+			return nil
+		})
+	flag.BoolFunc("f",
+		"Save individual file summary intermediate result to the FILES.md",
+		func(_ string) error {
+			config.WithFileSummary = true
+			return nil
+		})
+
+	flag.Parse()
+
+	return &config, nil
 }
