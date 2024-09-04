@@ -1,37 +1,32 @@
 # Reflexia
 
-Reflexia is a command-line tool that analyzes and summarizes code files within a given directory. It uses an external summarization service to generate summaries for each file and then combines these summaries into a project-level summary. The tool also generates a README file based on the project summary and file summaries.
+Reflexia is a code summarizer that takes a directory path as input and generates summaries for each file in the directory. It uses a language model to generate the summaries and can be configured to include or exclude specific files based on their content or location.
 
 ## Configuration
 
-1. Set environment variables:
-    - `GH_LINK`: Valid link for the GitHub repository
-    - `GH_USERNAME`: GitHub username for SSH authentication
-    - `GH_TOKEN`: GitHub token for SSH authentication
-
-2. Create a `.env` file in the project directory and add the environment variables.
+- Environment variables: PWD, GH_TOKEN
+- Command-line arguments:
+    - -g: valid link for github repository
+    - -u: github username for ssh auth
+    - -t: github token for ssh auth
+    - -c: do not check project root folder specific files such as go.mod or package.json
+    - -s: do not create SUMMARY.md and README.md, just print the file summaries
+    - -r: do not create README.md
+    - -p: do not create README.md for every package in the project
+    - -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
+    - -f: Save individual file summary intermediate result to the FILES.md
+    - -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
 
 ## Run Instructions
 
-1. Clone the repository to a local directory.
-2. Run the following command:
+1. Set the environment variables PWD and GH_TOKEN.
+2. Run the command `go run cmd/reflexia/reflexia.go` with the desired command-line arguments.
 
-```bash
-go run cmd/reflexia/reflexia.go -g <GH_LINK> -u <GH_USERNAME> -t <GH_TOKEN>
+For example, to summarize a project located at the GitHub repository https://github.com/example/project, you can run the following command:
+
+```
+go run cmd/reflexia/reflexia.go -g https://github.com/example/project
 ```
 
-3. The tool will analyze the code files in the specified directory and generate a project summary, file summaries, and a README file.
-
-## Optional Flags
-
-- `-c`: Do not check project root folder specific files such as go.mod or package.json
-- `-s`: Do not create SUMMARY.md and README.md, just print the file summaries
-- `-r`: Do not create README.md
-
-## Output
-
-The tool will generate the following files:
-
-- `SUMMARY.md`: Project summary
-- `README_GENERATED.md`: README file based on the project summary and file summaries
+This will generate the SUMMARY.md, README.md, and FILES.md files in the current directory.
 
