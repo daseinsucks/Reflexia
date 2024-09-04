@@ -68,7 +68,7 @@ func main() {
 	if config.WithFileSummary {
 		if err := writeFile(
 			filepath.Join(dirPath, "FILES.md"),
-			fileMapToString(fileMap),
+			fileMapToMd(fileMap),
 		); err != nil {
 			log.Fatal(err)
 		}
@@ -165,6 +165,15 @@ func fileMapToString(fileMap map[string]string) string {
 	return content
 }
 
+func fileMapToMd(fileMap map[string]string) string {
+	content := ""
+	for file, summary := range fileMap {
+		content += "#" + file + "\n"
+		summaryNLEscaped := strings.ReplaceAll(summary, "\n", "\n  ")
+		content += summaryNLEscaped + "\n\n"
+	}
+	return content
+}
 func getReadmePath(dirPath string) (string, error) {
 	readmeFilename := "README_GENERATED.md"
 	if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {

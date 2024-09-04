@@ -14,11 +14,10 @@ import (
 )
 
 var DefaultCodePrompt = `
-Describe each code symbol in short form as in the examples below.
+Describe each code symbol as in the examples below.
 Reduct your output as much as possible.
 Don't lose original namings.
-Always specify environment variables, cli arguments, flags, anything that can configure application behaviour.
-Always omit empty sections! Write about section only if they present!
+It is mandatory to mention any cli arguments, flags, env vars, anything that can affect application behaviour (if they exists in the code).
 It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
 
 Example input:

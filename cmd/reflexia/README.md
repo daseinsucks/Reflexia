@@ -1,33 +1,47 @@
 # reflexia
 
-This package provides a tool for summarizing code and generating documentation for Go projects. It can be used to create a summary of the code in a given directory, as well as a README file for the project. The tool can also be used to generate summaries for individual files within the project.
+This package provides a tool for summarizing code and generating documentation for projects. It uses a summarizer service to generate summaries of code files, packages, and the entire project. The tool can be configured using command-line arguments and environment variables.
 
-Environment variables: "PWD", "GH_TOKEN"
-CLI arguments:
-	- -g: valid link for github repository
-	- -u: github username for ssh auth
-	- -t: github token for ssh auth
-	- -c: do not check project root folder specific files such as go.mod or package.json
-	- -s: do not create SUMMARY.md and README.md, just print the file summaries
-	- -r: do not create README.md
-	- -p: do not create README.md for every package in the project
-	- -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
-	- -f: Save individual file summary intermediate result to the FILES.md
-	- -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
+## File Structure
 
-Project package structure:
 - cmd/reflexia/reflexia.go
-- reflexia/internal
-- reflexia/pkg/project
-- reflexia/pkg/summarize
 
-## Main logic
+## Code Summary
 
-The main function initializes the configuration, gets the directory path, creates a summarize service, gets the project configuration, and calls the summarize service to get the file map. If the WithFileSummary flag is true, it writes the file map to a file called FILES.md. If the NoSummary flag is false, it calls the summarize service to get the summary content and writes it to a file called SUMMARY.md. If the NoReadme flag is false, it calls the summarize service to get the readme content and writes it to a file called README.md.
+### Main Function
 
-The processWorkingDirectory function returns the directory path based on the provided GitHub link or the first command-line argument. The initConfig function initializes the configuration using the flag package and returns the configuration. The fileMapToString function converts the file map to a string. The getReadmePath function returns the readme filename based on the directory path. The writeFile function writes the content to a file.
+The main function initializes a config struct with default values, parses command-line arguments, and calls various functions to process the working directory, summarize code, and write summaries to files.
 
-## Edge cases
+### processWorkingDirectory Function
 
-The application can be launched with various command-line arguments to configure its behavior. For example, the -s flag can be used to skip the creation of SUMMARY.md and README.md files, and only print the file summaries. The -r flag can be used to skip the creation of the README.md file, and the -p flag can be used to skip the creation of README.md files for each package in the project. The -br flag can be used to overwrite the existing README.md file in the root project directory instead of creating a new file called README_GENERATED.md. The -f flag can be used to save the individual file summary intermediate result to a file called FILES.md, and the -bp flag can be used to create a README_GENERATED.md file if a README.md file already exists in the package directory instead of overwriting it.
+This function determines the directory path to process. If a GitHub link is provided, it clones the repository to a temporary directory. Otherwise, it uses the first command-line argument as the directory path.
+
+### initConfig Function
+
+This function initializes a config struct with default values and parses command-line arguments. It returns the config struct.
+
+### Summarization Process
+
+The tool uses a summarizer service to generate summaries of code files, packages, and the entire project. The summaries are written to files named FILES.md, README.md, SUMMARY.md, and README_GENERATED.md.
+
+### Command-Line Arguments
+
+- -g, --github-link: valid link for GitHub repository
+- -u, --github-username: GitHub username for SSH authentication
+- -t, --github-token: GitHub token for SSH authentication
+- -c: do not check project root folder specific files such as go.mod or package.json
+- -s: do not create SUMMARY.md and README.md, just print the file summaries
+- -r: do not create README.md
+- -p: do not create README.md for every package in the project
+- -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
+- -f: Save individual file summary intermediate result to the FILES.md
+- -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
+
+### Environment Variables
+
+- PWD: current working directory
+- HELPER_URL: helper URL for summarizer service
+- MODEL: model for summarizer service
+- API_TOKEN: API token for summarizer service
+- STOP_WORD: stop words for summarizer service
 

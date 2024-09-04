@@ -5,34 +5,36 @@ This package provides a service for summarizing code and generating summaries fo
 ## File Structure
 
 ```
-pkg/summarize/summarize.go
+summarize/
+├── summarize.go
+└── ...
 ```
 
 ## Code Summary
 
 ### SummarizerService
 
-The SummarizerService type holds the necessary information for interacting with the language model and generating summaries. It has the following fields:
+The SummarizerService is responsible for handling code summarization requests. It has the following fields:
 
-- HelperURL: The URL of the helper service that will be used to generate the content instruction.
-- Model: The name of the language model to be used for summarization.
-- ApiToken: The API token required to access the language model.
-- Network: The network to be used for communication with the language model.
-- LlmOptions: Additional options for configuring the language model.
+- HelperURL: URL for the helper service
+- Model: Name of the language model to use
+- ApiToken: API token for the language model
+- Network: Network to use for communication with the language model
+- LlmOptions: Options for the language model
 
-The SummarizerService has three main methods:
+The service has three main functions:
 
-1. CodeSummaryRequest: This method takes a prompt and content string as input and calls the helper.GenerateContentInstruction function with the provided parameters. It returns the response and any error encountered.
+1. CodeSummaryRequest: Takes a prompt and content as input and calls the helper service to generate a summary. Returns the response and any error encountered.
 
-2. SummarizeRequest: Similar to CodeSummaryRequest, this method also takes a prompt and content string as input and calls the helper.GenerateContentInstruction function. It returns the response and any error encountered.
+2. SummarizeRequest: Similar to CodeSummaryRequest, but it takes a prompt and content as input and calls the helper service to generate a summary. Returns the response and any error encountered.
 
-3. SummarizeCode: This method takes a projectConfig as input and creates a map to store file paths and summaries. It then walks through the project directory using util.WalkDirIgnored and for each file, checks if it matches the file filter. If it matches, it reads the file content, calculates the relative path, and calls s.CodeSummaryRequest to get the summary. The summary is then stored in the map with the relative path as the key. Finally, the method returns the map and any error encountered.
+3. SummarizeCode: Takes a project configuration as input and walks through the project directory. For each file that matches the file filter in the project configuration, it reads the file content, calculates the relative path, and calls CodeSummaryRequest to get the summary. Stores the summary in a map with the relative path as the key and returns the map and any error encountered.
 
-## Edge Cases
+### Edge Cases
 
-There are no specific edge cases mentioned in the provided code.
+- The package does not specify any edge cases for launching the application.
 
-## Environment Variables, Flags, and CLI Arguments
+### Environment Variables, Flags, and Command-Line Arguments
 
-There are no environment variables, flags, or CLI arguments used for configuration in this package.
+- No environment variables, flags, or command-line arguments are used for configuration.
 

@@ -29,7 +29,11 @@ func WalkDirIgnored(dirPath string, f WalkDirIgnoredFunction) error {
 			return filepath.SkipDir
 		}
 
-		if ignoreFile.MatchesPath(path) {
+		relPath, err := filepath.Rel(dirPath, path)
+		if err != nil {
+			return err
+		}
+		if ignoreFile.MatchesPath(relPath) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}
