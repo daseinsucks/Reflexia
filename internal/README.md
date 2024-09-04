@@ -1,30 +1,35 @@
 # util
 
-This package provides utility functions for working with files and directories, as well as loading environment variables from a .env file.
+This package provides utility functions for working with files and directories, including a function to walk through a directory and skip files that are ignored by a .gitignore file. It also includes a function to load environment variables.
 
-The package includes a function `WalkDirIgnored` that walks through a directory and calls a provided function for each file or directory, skipping directories named ".git" and files or directories matching a .gitignore file. It also includes a function `LoadEnv` that loads environment variables from a .env file using the godotenv library and returns the value for a given key.
-
-The package can be configured using the environment variable "BAZ".
-
-The package can be launched in the following ways:
-
-1. By importing the package and calling its functions directly.
-
-2. By using the package as a dependency in another project.
-
-The package structure is as follows:
+## File Structure
 
 ```
-util/
-├── internal/
-│   └── util.go
+internal/
+  util.go
 ```
 
-## WalkDirIgnored
+## Code Summary
 
-This function takes a directory path and a function as arguments. It compiles a .gitignore file from the directory path and walks through the directory, calling the provided function for each file or directory. It skips directories named ".git" and files or directories matching the .gitignore file.
+### WalkDirIgnored
 
-## LoadEnv
+This function takes a working directory, a path to a .gitignore file, and a function as arguments. It compiles the .gitignore file using the `ignore.CompileIgnoreFile` function. Then, it walks through the directory using `filepath.WalkDir`, skipping the .git directory. For each file or directory found, it calculates the relative path using `filepath.Rel` and checks if the path matches the .gitignore using `ignoreFile.MatchesPath`. If the path is not ignored, it calls the provided function with the path and the corresponding `fs.DirEntry`. Finally, it returns any error encountered during the process.
 
-This function takes a key as an argument and loads the .env file using the godotenv library. It returns the environment variable value for the given key. If the .env file loading fails or the key is empty, it logs a fatal error.
+### LoadEnv
+
+This function takes a key as an argument and returns the value of the environment variable with that key. If the key is empty, it logs a fatal error.
+
+## Edge Cases
+
+The application can be launched with the following environment variables:
+
+- key: The key of the environment variable to be loaded.
+
+The application can also be launched with the following command-line arguments:
+
+- -key: The key of the environment variable to be loaded.
+
+The application can be configured using the following files:
+
+- .gitignore: The file containing the list of files and directories to be ignored.
 

@@ -1,67 +1,63 @@
 # Reflexia
 
-This project is a code summarizer that takes a directory path as input and generates a summary of the code in that directory. It uses a language model to generate the summaries and can be configured to ignore specific files or directories. The project also includes a helper function to clone a GitHub repository if a valid link is provided.
+This project is a code summarizer that takes a Go project as input and generates summaries for each file, package, and the entire project. It uses a combination of environment variables, command-line arguments, and configuration files to determine the behavior and output of the summarizer.
 
-Project structure:
-- cmd/reflexia/reflexia.go
-- internal/util.go
+Project Structure:
 - pkg/project/project.go
 - pkg/summarize/summarize.go
+- cmd/reflexia/reflexia.go
+- internal/util.go
 
-Summary of the code:
+Summary of Code Parts:
 
-## Main logic
+1. Project Configuration (pkg/project/project.go):
+   - The `ProjectConfig` struct defines the configuration for the summarizer, including file filters, project root filters, module match, stop words, and prompts for code, summary, package, readme, and root path.
+   - The `GetProjectConfig` function walks through all .toml files in the current directory and its subdirectories to find the first matching ProjectConfig.
+   - The `BuildPackageFiles` function builds a map of package names to a list of file paths based on the ModuleMatch field of the ProjectConfig.
 
-The main function in `cmd/reflexia/reflexia.go` initializes a config struct with default values, parses command-line arguments, and calls the `processWorkingDirectory` function to get the directory path. It then calls the `summarizeService.SummarizeCode` function to get the file map and writes it to a file. Finally, it calls the `summarizeService.SummarizeRequest` function to get the summary content and writes it to a file.
+2. Summarization Service (pkg/summarize/summarize.go):
+   - The `SummarizerService` struct contains fields for helper URL, model, API token, network, and LLM options.
+   - The `CodeSummaryRequest` and `SummarizeRequest` functions take prompt and content as input and call helper.GenerateContentInstruction to generate a response.
+   - The `SummarizeCode` function takes a projectConfig as input, walks through the project directory, and calls `CodeSummaryRequest` to generate summaries for each file.
 
-## Process working directory
+3. Main Application (cmd/reflexia/reflexia.go):
+   - The `Config` struct defines the configuration for the main application, including GitHub link, username, token, light check, no summary, no readme, no package summary, no backup root readme, with file summary, and with package readme backup.
+   - The `main` function initializes the config, gets the workdir, calls `summarizeService.SummarizeCode` to get fileMap, and writes the fileMap to FILES.md if WithFileSummary is true.
+   - It also calls `summarizeService.SummarizeRequest` to get pkgSummaryContent for each package and write it to the appropriate README.md file.
 
-The `processWorkingDirectory` function takes the GitHub link, username, and token as input. It gets the current working directory and, if a GitHub link is provided, clones the repository to a temporary directory. If there are command-line arguments, it sets the directory path to the first argument. Finally, it returns the directory path.
+4. Utility Functions (internal/util.go):
+   - The `WalkDirIgnored` function takes a workdir, gitignorePath, and f as arguments, compiles the .gitignore file, walks through the directory, and calls f with the path and fs.DirEntry if not ignored.
+   - The `LoadEnv` function takes a key as argument and returns the value of the environment variable with the key.
 
-## Initialize config
+Edge Cases:
 
-The `initConfig` function initializes a config struct with default values and parses command-line arguments. It returns the config struct.
+- If no matching ProjectConfig is found, the summarizer will return an error.
+- If no GitHub link is provided, the summarizer will use the first command-line argument as the workdir.
+- If the .gitignore file is not found, the summarizer will not ignore any files.
 
-## CLI arguments
+Environment Variables:
 
-- `-g, --g`: valid link for GitHub repository
-- `-u, --u`: GitHub username for SSH auth
-- `-t, --t`: GitHub token for SSH auth
-- `-c`: do not check project root folder specific files such as go.mod or package.json
-- `-s`: do not create SUMMARY.md and README.md, just print the file summaries
-- `-r`: do not create README.md
-- `-p`: do not create README.md for every package in the project
-- `-br`: overwrite README.md for the root project directory instead of README_GENERATED.md creation
-- `-f`: Save individual file summary intermediate result to the FILES.md
-- `-bp`: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
+- PWD: current working directory
+- HELPER_URL: helper URL
+- MODEL: model
+- API_TOKEN: API token
 
-## Environment variables
+Config Files:
 
-- `PWD`: current working directory
-- `HELPER_URL`: helper URL
-- `MODEL`: model
-- `API_TOKEN`: API token
-- `STOP_WORD`: stop word
+- project_config/*.toml
+- .env
+- .gitignore
 
-## Internal util
+CLI Arguments:
 
-The `util.WalkDirIgnored` function compiles a .gitignore file from the given directory path and walks through the directory, calling the provided function for each file/directory. It skips directories named ".git" and files/directories matching the .gitignore file.
-
-The `LoadEnv` function loads the .env file using godotenv and returns the environment variable value for the given key. It logs a fatal error if the .env file loading fails or the key is empty.
-
-## Project
-
-The `GetProjectConfig` function reads the configuration from files and returns a `ProjectConfig` struct.
-
-The `BuildPackageFiles` function returns a map of package files based on the `ModuleMatch` field in the `ProjectConfig` struct.
-
-The `hasFilterFiles` and `hasRootFilterFile` functions check if any of the provided filters are present in the given directory.
-
-## Summarize
-
-The `SummarizerService` struct has fields for the helper URL, model, API token, network, and LLM options.
-
-The `CodeSummaryRequest` and `SummarizeRequest` functions take a prompt and content as input, call the helper function to generate the content instruction, and return the response and any error encountered.
-
-The `SummarizeCode` function takes a `ProjectConfig` struct as input, creates a map to store file paths and summaries, and walks through the project directory using `util.WalkDirIgnored`. For each file, it checks if it matches the file filter in the `ProjectConfig` struct. If it matches, it reads the file content, calculates the relative path, and calls `s.CodeSummaryRequest` to get the summary. Finally, it stores the summary in the map with the relative path as the key and returns the map and any error encountered.
+- -g, --github-link: valid link for github repository
+- -u, --github-username: github username for ssh auth
+- -t, --github-token: github token for ssh auth
+- -c: do not check project root folder specific files such as go.mod or package.json
+- -s: do not create SUMMARY.md and README.md, just print the file summaries
+- -r: do not create README.md
+- -p: do not create README.md for every package in the project
+- -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
+- -f: Save individual file summary intermediate result to the FILES.md
+- -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
 

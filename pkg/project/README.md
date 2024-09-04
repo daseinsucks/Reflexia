@@ -1,47 +1,37 @@
 # project
 
-This package provides a way to configure and manage project files based on a set of filters and prompts. It reads configuration from files and builds package files based on the provided ModuleMatch. The package also includes functions to check if specific filters are present in the directory.
-
-Environment variables, flags, or cmdline arguments can be used for configuration.
-
-Edge cases for launching the application include:
-
-- No configuration files found
-- Invalid configuration file format
-- Missing or invalid ModuleMatch
-
-Project package structure:
-
-- pkg/project/project.go
-
-Summary of major code parts:
+This package provides a way to configure and manage project files based on a set of criteria. It reads configuration files in the project_config directory and uses them to build a map of package names to file paths. The package also includes functions to check if files in a given directory match specific filters.
 
 ## ProjectConfig
 
-The ProjectConfig struct holds the configuration for the project, including:
+The ProjectConfig struct holds the configuration settings for the package. It has the following fields:
 
-- FileFilter: A list of file extensions to include in the project.
-- ProjectRootFilter: A list of file extensions to exclude from the project.
-- CodePrompt: A prompt to be used when generating code.
-- SummaryPrompt: A prompt to be used when generating a project summary.
-- ReadmePrompt: A prompt to be used when generating a README file.
-- PackagePrompt: A prompt to be used when generating a package file.
-- RootPath: The root directory of the project.
-- ModuleMatch: A regular expression to match the module name.
+- FileFilter: A string that specifies the pattern to match files.
+- ProjectRootFilter: A string that specifies the pattern to match project root directories.
+- ModuleMatch: A string that specifies whether to match files based on directory or package name.
+- StopWords: A list of strings that should be ignored when matching files.
+- CodePrompt, SummaryPrompt, PackagePrompt, ReadmePrompt: Strings that specify prompts for code, summary, package, and readme files, respectively.
+- RootPath: A string that specifies the root path of the project.
 
 ## GetProjectConfig
 
-The GetProjectConfig function reads the configuration from files and returns a ProjectConfig struct.
+The GetProjectConfig function takes the current directory and a boolean flag as input. It walks through all .toml files in the current directory and its subdirectories and returns the first ProjectConfig that matches the given criteria. If no matching ProjectConfig is found, it returns an error.
 
 ## BuildPackageFiles
 
-The BuildPackageFiles function takes a ProjectConfig struct and returns a map of package files to their corresponding source files. It builds the package files based on the ModuleMatch provided in the ProjectConfig struct.
+The BuildPackageFiles function takes a ProjectConfig as input and builds a map of package names to a list of file paths. The map is built based on the ModuleMatch field of the ProjectConfig. If ModuleMatch is "directory", it walks through the directory and collects all files that match the FileFilter. If ModuleMatch is "package_name", it parses the Go code and extracts the package name from the AST.
 
-## hasFilterFiles
+## hasFilterFiles and hasRootFilterFile
 
-The hasFilterFiles function takes a directory path and a list of file extensions as input and returns true if any of the filters are present in the directory.
+The hasFilterFiles and hasRootFilterFile functions check if any files in the given directory match the given filters. They return true if a matching file is found, false otherwise.
 
-## hasRootFilterFile
+## Edge Cases
 
-The hasRootFilterFile function takes a directory path and a list of file extensions as input and returns true if any of the filters are present in the directory.
+- If no matching ProjectConfig is found, the package will return an error.
+- If the ModuleMatch field is not "directory" or "package_name", the package will return an error.
+- If the FileFilter or ProjectRootFilter fields are not provided, the package will return an error.
+
+## Project Package Structure
+
+- project_config/*.toml
 

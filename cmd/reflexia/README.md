@@ -1,49 +1,52 @@
 # reflexia
 
-This package provides a command-line tool for summarizing code in a given directory. It can be used to generate a README.md file for a project, as well as individual file summaries. The tool supports various configuration options, including command-line arguments and environment variables.
+This package provides a tool for summarizing code and generating README files for projects. It uses a helper service to analyze the code and generate summaries, and it can be configured to include or exclude specific files and directories. The package also supports cloning repositories from GitHub and writing summaries to multiple output files.
 
 ## Project Package Structure
 
-- cmd/reflexia/reflexia.go
+```
+cmd/reflexia/reflexia.go
+```
 
 ## Code Summary
 
 ### Main Function
 
-The main function initializes a config struct with default values, parses command-line arguments, and calls the processWorkingDirectory function to get the directory path. It then calls the summarizeService.SummarizeCode function to get the file map and the summarizeService.SummarizeRequest function to get the summary content. Finally, it writes the file map and summary content to files.
+The main function initializes the configuration, gets the working directory, and calls various functions to summarize the code and generate the output files. It first initializes the configuration using the `initConfig()` function, which loads environment variables and parses command-line arguments. Then, it calls the `processWorkingDirectory()` function to determine the working directory based on the provided GitHub link or the first command-line argument.
 
-### processWorkingDirectory Function
+Next, the main function calls the `summarizeService.SummarizeCode()` function to get a map of files and their summaries. If the `WithFileSummary` flag is set, it calls the `writeFile()` function to write this map to a file named `FILES.md`.
 
-This function gets the current working directory and, if a GitHub link is provided, clones the repository to a temporary directory. If there are command-line arguments, it sets the directory path to the first argument. It returns the directory path.
+The main function then calls the `summarizeService.SummarizeRequest()` function multiple times to generate summaries for each package, the root project, and the individual files. It writes these summaries to the appropriate README files using the `writeFile()` function.
 
 ### initConfig Function
 
-This function initializes a config struct with default values and parses command-line arguments. It returns the config struct.
+The `initConfig()` function loads environment variables using the `godotenv.Load()` function and initializes the configuration struct. It sets default values for the configuration fields and parses command-line arguments using the `flag.Parse()` function.
 
-### Command-Line Arguments
+### processWorkingDirectory Function
 
-- -g, --g: valid link for GitHub repository
-- -u, --u: GitHub username for SSH authentication
-- -t, --t: GitHub token for SSH authentication
-- -c: do not check project root folder specific files such as go.mod or package.json
-- -s: do not create SUMMARY.md and README.md, just print the file summaries
-- -r: do not create README.md
-- -p: do not create README.md for every package in the project
-- -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
-- -f: Save individual file summary intermediate result to the FILES.md
-- -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
+The `processWorkingDirectory()` function gets the working directory from the `PWD` environment variable. If a GitHub link is provided, it clones the repository to the working directory. Otherwise, it uses the first command-line argument as the working directory.
 
-### Environment Variables
+### fileMapToString and fileMapToMd Functions
 
-- PWD: current working directory
-- HELPER_URL: helper URL
-- MODEL: model
-- API_TOKEN: API token
-- STOP_WORD: stop word
+These functions convert the file map to a string and a markdown string, respectively.
+
+### getReadmePath Function
+
+This function returns the path to the README.md file.
+
+### writeFile Function
+
+The `writeFile()` function writes the provided content to the specified path.
 
 ### Edge Cases
 
-- Launching the application without providing a GitHub link or directory path will result in an error.
-- If the provided GitHub link is invalid or the repository cannot be cloned, the application will fail.
-- If the directory path is not valid or does not contain any files, the application will not generate any output.
+The package supports various edge cases, such as cloning repositories from GitHub, handling different working directories, and generating summaries for individual files or packages. It also allows users to customize the output by specifying which files and directories to include or exclude.
+
+### Environment Variables, Flags, and Configuration Files
+
+The package uses the following environment variables, flags, and configuration files:
+
+- Environment variables: `PWD`, `HELPER_URL`, `MODEL`, `API_TOKEN`
+- Flags: `-g`, `--github-link`, `-u`, `--github-username`, `-t`, `--github-token`, `-c`, `-s`, `-r`, `-p`, `-br`, `-f`, `-bp`
+- Configuration files: `.env`
 

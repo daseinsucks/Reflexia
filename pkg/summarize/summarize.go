@@ -49,6 +49,7 @@ func (s *SummarizerService) SummarizeCode(
 
 	if err := util.WalkDirIgnored(
 		projectConfig.RootPath,
+		filepath.Join(projectConfig.RootPath, ".gitignore"),
 		func(path string, d fs.DirEntry) error {
 			for _, filter := range projectConfig.FileFilter {
 				if strings.HasSuffix(d.Name(), filter) {

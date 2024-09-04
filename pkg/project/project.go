@@ -11,189 +11,61 @@ import (
 	"path/filepath"
 	util "reflexia/internal"
 	"strings"
+
+	"github.com/pelletier/go-toml/v2"
 )
-
-var DefaultCodePrompt = `
-Describe each code symbol as in the examples below.
-Reduct your output as much as possible.
-Don't lose original namings.
-It is mandatory to mention any cli arguments, flags, env vars, anything that can affect application behaviour (if they exists in the code).
-It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
-
-Example input:
-` + "```" + `
-package foobar
-import (
-	"fmt"
-	"os"
-)
-
-var zab = "zab"
-const zoob = "zoob"
-
-struct FooBar {
-	Foo string
-	Bar string
-}
-
-func SomeFunc() {
-	// Unimplemented
-	// TODO: implement SomeFunc
-}
-
-func main() {
-	foobar := FooBar{
-		Foo: "foo",
-		Bar: "bar"
-	}
-	// Print current directory
-	fmt.Println(os.Getenv("PWD"))
-	fmt.Println(foobar.Foo + foobar.Bar + os.Getenv("BAZ") + zab + zoob)
-	// Reverse of above output
-	fmt.Println("boozbazZABraboff")
-	//fmt.Println("TEST")
-}
-` + "```" + `
-
-Example output:
-package foobar
-import: fmt, os
-
-struct FooBar:
-	- Fields: Foo, Bar
-var:
-	- zab: "zab"
-const:
-	- zoob: "zoob"
-
-func SomeFunc(): unimplemented
-func main():
-	- assigns var foobar with FooBar struct with fields Foo: "foo", Bar: "bar"
-	- prints current working directory
-	- prints foobar.Foo + foobar.Bar + environment variable "BAZ" + var zab + const zoob
-	- prints "boozbazZABraboff" which is reverse of above output
-
-environment variables: "PWD", "BAZ"
-` + util.LoadEnv("STOP_WORD") + `
-
-Example input:
-` + "```" + `
-package main
-import (
-	"fmt"
-)
-
-func main() {
-	fmt.Println("Hello world!")
-}
-` + "```" + `
-
-Example output:
-package main
-import: fmt
-
-func main():
-	- prints "Hello world!"
-` + util.LoadEnv("STOP_WORD") + `
-
-Provided code:
-`
-
-var DefaultPackageSummaryPrompt = `
-Based on provided input from the summary of project package files create a markdown summary of what that package code does.
-First write a short summary about provided project code summary.
-Always specify which environment variables, flags, cmdline arguments can be used for configuration.
-Always specify the edgecases of how application can be launched.
-Try to guess package name from the file contents or file paths and add it as the markdown header of the summary.
-Write out all file names as a project package structure.
-Then write summary about every major code part, group it with the markdown subheaders.
-Try to explain relations between code entities, try to find unclear places, possibly dead code.		
-If unclear places or dead code are not present - don't write anything about their absense.
-Try to be clear, concise, and brief.
-The main goal is to summarize the logic of the whole package.
-It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
-`
-
-var DefaultSummaryPrompt = `
-Based on provided input from summary of the project files create a markdown summary of what that project code does.
-First write a short summary about provided project code summary.
-Always specify which environment variables, flags, cmdline arguments can be used for configuration.
-Always specify the edgecases of how application can be launched.
-Try to guess the project name from the filenames if possible and add it as the markdown header of the summary.
-Write out all file names as a project structure.
-Then write summary about every major code part, group it with the markdown subheaders.
-Try to explain relations between code entities, try to find unclear places, possibly dead code.		
-If unclear places or dead code are not present - don't write anything about their absense.
-Try to be clear, concise, and brief.
-The main goal is to summarize the logic of the whole project.
-It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
-`
-var DefaultReadmePrompt = `
-Based on provided input from technical summary of the project create a README.md contents for that project.
-Try to guess the project name from filenames or other namings, if present.
-Include short project description, possible configuration and/or run instructions.
-Try to be clear, concise, and brief.
-It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
-`
 
 type ProjectConfig struct {
-	FileFilter        []string
-	ProjectRootFilter []string
-	CodePrompt        string
-	SummaryPrompt     string
-	ReadmePrompt      string
-	PackagePrompt     string
+	FileFilter        []string `toml:"file_filter"`
+	ProjectRootFilter []string `toml:"project_root_filter"`
+	ModuleMatch       string   `toml:"module_match"`
+	StopWords         []string `toml:"stop_words"`
+	CodePrompt        string   `toml:"code_prompt"`
+	SummaryPrompt     string   `toml:"summary_prompt"`
+	PackagePrompt     string   `toml:"package_prompt"`
+	ReadmePrompt      string   `toml:"readme_prompt"`
 	RootPath          string
-	ModuleMatch       string
 }
 
-func GetProjectConfig(currentDirectory string, lightCheck bool) *ProjectConfig {
-	// TODO: read that from configuration file(s)
-	for _, config := range []ProjectConfig{
-		ProjectConfig{
-			FileFilter:        []string{".go"},
-			ProjectRootFilter: []string{"go.mod"},
-			CodePrompt:        DefaultCodePrompt,
-			SummaryPrompt:     DefaultSummaryPrompt,
-			ReadmePrompt:      DefaultReadmePrompt,
-			PackagePrompt:     DefaultPackageSummaryPrompt,
-			RootPath:          currentDirectory,
-			ModuleMatch:       "package_name",
-		},
+func GetProjectConfig(currentDirectory string, lightCheck bool) (*ProjectConfig, error) {
+	var projectConfigs = []ProjectConfig{}
 
-		ProjectConfig{
-			FileFilter:        []string{".py"},
-			ProjectRootFilter: []string{"requirements.txt"},
-			CodePrompt:        DefaultCodePrompt,
-			SummaryPrompt:     DefaultSummaryPrompt,
-			ReadmePrompt:      DefaultReadmePrompt,
-			PackagePrompt:     DefaultPackageSummaryPrompt,
-			RootPath:          currentDirectory,
-			ModuleMatch:       "directory",
-		},
+	if err := util.WalkDirIgnored(
+		"project_config", filepath.Join(currentDirectory, ".gitignore"),
+		func(path string, d fs.DirEntry) error {
+			if d.IsDir() {
+				return nil
+			}
+			if strings.HasSuffix(path, ".toml") {
+				content, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				var projectConfig ProjectConfig
+				if err = toml.Unmarshal(content, &projectConfig); err != nil {
+					return err
+				}
+				projectConfig.RootPath = currentDirectory
+				projectConfigs = append(projectConfigs, projectConfig)
+			}
+			return nil
+		}); err != nil {
+		return nil, err
+	}
 
-		ProjectConfig{
-			FileFilter:        []string{".ts", ".d.ts", ".tsx"},
-			ProjectRootFilter: []string{"package.json"},
-			CodePrompt:        DefaultCodePrompt,
-			SummaryPrompt:     DefaultSummaryPrompt,
-			ReadmePrompt:      DefaultReadmePrompt,
-			PackagePrompt:     DefaultPackageSummaryPrompt,
-			RootPath:          currentDirectory,
-			ModuleMatch:       "directory",
-		},
-	} {
+	for _, config := range projectConfigs {
 		if lightCheck && hasFilterFiles(currentDirectory, config.FileFilter) {
-			return &config
+			return &config, nil
 		}
 		if hasFilterFiles(currentDirectory, config.FileFilter) &&
 			hasRootFilterFile(currentDirectory, config.ProjectRootFilter) {
-			return &config
+			return &config, nil
 		}
 	}
 
-	log.Fatal("failed to detect project language, available languages: go, python, typescript")
-	return &ProjectConfig{}
+	return nil, errors.New(
+		"failed to detect project language, available languages: go, python, typescript",
+	)
 }
 
 func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {
@@ -202,6 +74,7 @@ func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {
 	case "directory":
 		if err := util.WalkDirIgnored(
 			pc.RootPath,
+			filepath.Join(pc.RootPath, ".gitignore"),
 			func(path string, d fs.DirEntry) error {
 				for _, filter := range pc.FileFilter {
 					if strings.HasSuffix(d.Name(), filter) {
@@ -226,6 +99,7 @@ func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {
 	case "package_name":
 		if err := util.WalkDirIgnored(
 			pc.RootPath,
+			filepath.Join(pc.RootPath, ".gitignore"),
 			func(path string, d fs.DirEntry) error {
 				for _, filter := range pc.FileFilter {
 					if strings.HasSuffix(d.Name(), filter) {
@@ -259,18 +133,20 @@ func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {
 	return packageFileMap, nil
 }
 
-func hasFilterFiles(dirPath string, filters []string) bool {
+func hasFilterFiles(workdir string, filters []string) bool {
 	found := false
 
-	err := util.WalkDirIgnored(dirPath, func(path string, d fs.DirEntry) error {
-		for _, filter := range filters {
-			if strings.HasSuffix(d.Name(), filter) {
-				found = true
-				return io.EOF
+	err := util.WalkDirIgnored(
+		workdir, filepath.Join(workdir, ".gitignore"),
+		func(path string, d fs.DirEntry) error {
+			for _, filter := range filters {
+				if strings.HasSuffix(d.Name(), filter) {
+					found = true
+					return io.EOF
+				}
 			}
-		}
-		return nil
-	})
+			return nil
+		})
 	if err == io.EOF {
 		err = nil
 	}
@@ -280,9 +156,9 @@ func hasFilterFiles(dirPath string, filters []string) bool {
 	return found
 }
 
-func hasRootFilterFile(dirPath string, filters []string) bool {
+func hasRootFilterFile(workdir string, filters []string) bool {
 	for _, filter := range filters {
-		if _, err := os.Stat(filepath.Join(dirPath, filter)); err != nil {
+		if _, err := os.Stat(filepath.Join(workdir, filter)); err != nil {
 			if !os.IsNotExist(err) {
 				panic(err)
 			}

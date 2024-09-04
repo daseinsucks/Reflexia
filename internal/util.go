@@ -7,20 +7,16 @@ import (
 	"path/filepath"
 
 	ignore "github.com/crackcomm/go-gitignore"
-	"github.com/joho/godotenv"
 )
 
 type WalkDirIgnoredFunction func(path string, d fs.DirEntry) error
 
-func WalkDirIgnored(dirPath string, f WalkDirIgnoredFunction) error {
-	ignoreFile, err := ignore.CompileIgnoreFile(
-		filepath.Join(dirPath, ".gitignore"))
+func WalkDirIgnored(workdir, gitignorePath string, f WalkDirIgnoredFunction) error {
+	ignoreFile, err := ignore.CompileIgnoreFile(gitignorePath)
 	if err != nil {
-		log.Printf(
-			"failed to load .gitignore file for %s, %e",
-			dirPath, err)
+		log.Printf("failed to load .gitignore file %v", err)
 	}
-	err = filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(workdir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -29,11 +25,11 @@ func WalkDirIgnored(dirPath string, f WalkDirIgnoredFunction) error {
 			return filepath.SkipDir
 		}
 
-		relPath, err := filepath.Rel(dirPath, path)
+		relPath, err := filepath.Rel(workdir, path)
 		if err != nil {
 			return err
 		}
-		if ignoreFile.MatchesPath(relPath) {
+		if ignoreFile != nil && ignoreFile.MatchesPath(relPath) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}
@@ -46,9 +42,6 @@ func WalkDirIgnored(dirPath string, f WalkDirIgnoredFunction) error {
 }
 
 func LoadEnv(key string) string {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("failed to load .env file, %e", err)
-	}
 	value := os.Getenv(key)
 	if value == "" {
 		log.Fatalf("empty environment key %s", key)

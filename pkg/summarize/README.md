@@ -1,40 +1,26 @@
 # Summarize
 
-This package provides a service for summarizing code and generating summaries for given prompts and content. It utilizes the LangChain library for interacting with language models and the Reflexia project for handling project configurations.
+This package provides a service for summarizing code and generating summaries for files based on a given prompt and content. It utilizes the LangChain library for interacting with language models and the reflexia/pkg/project package for handling project configurations.
 
-## File Structure
+The package structure is as follows:
 
 ```
-summarize/
-├── summarize.go
-└── ...
+pkg/summarize/summarize.go
 ```
 
-## Code Summary
+## SummarizerService
 
-### SummarizerService
+The SummarizerService type holds the necessary information for the summarization process, including the HelperURL, Model, ApiToken, Network, and LlmOptions.
 
-The SummarizerService is responsible for handling code summarization requests. It has the following fields:
+The service provides three main functions:
 
-- HelperURL: URL for the helper service
-- Model: Name of the language model to use
-- ApiToken: API token for the language model
-- Network: Network to use for communication with the language model
-- LlmOptions: Options for the language model
+1. CodeSummaryRequest: This function takes a prompt and content as input and calls the helper.GenerateContentInstruction function with the provided parameters. It returns the response and any error encountered during the process.
 
-The service has three main functions:
+2. SummarizeRequest: Similar to CodeSummaryRequest, this function also takes a prompt and content as input and calls the helper.GenerateContentInstruction function. It returns the response and any error encountered during the process.
 
-1. CodeSummaryRequest: Takes a prompt and content as input and calls the helper service to generate a summary. Returns the response and any error encountered.
+3. SummarizeCode: This function takes a projectConfig as input and creates a map to store file paths and summaries. It then walks through the project directory, ignoring files specified in .gitignore. For each file, it checks if the file extension matches any of the file filters specified in projectConfig. If a match is found, it reads the file content, calculates the relative path, and calls s.CodeSummaryRequest to generate a summary. The summary is then stored in the fileMap along with the relative path. Finally, the function returns the fileMap and any error encountered during the process.
 
-2. SummarizeRequest: Similar to CodeSummaryRequest, but it takes a prompt and content as input and calls the helper service to generate a summary. Returns the response and any error encountered.
+## Edge Cases
 
-3. SummarizeCode: Takes a project configuration as input and walks through the project directory. For each file that matches the file filter in the project configuration, it reads the file content, calculates the relative path, and calls CodeSummaryRequest to get the summary. Stores the summary in a map with the relative path as the key and returns the map and any error encountered.
-
-### Edge Cases
-
-- The package does not specify any edge cases for launching the application.
-
-### Environment Variables, Flags, and Command-Line Arguments
-
-- No environment variables, flags, or command-line arguments are used for configuration.
+The application can be launched with no environment variables, config files, CLI arguments, or flags.
 

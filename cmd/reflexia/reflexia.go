@@ -13,6 +13,7 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms"
 
 	util "reflexia/internal"
@@ -39,12 +40,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dirPath, err := processWorkingDirectory(
+	workdir, err := processWorkingDirectory(
 		*config.GithubLink, *config.GithubUsername, *config.GithubToken)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	projectConfig, err := project.GetProjectConfig(workdir, config.LightCheck)
+	if err != nil {
+		log.Fatal(err)
+	}
 	summarizeService := &summarize.SummarizerService{
 		HelperURL: util.LoadEnv("HELPER_URL"),
 		Model:     util.LoadEnv("MODEL"),
@@ -52,14 +57,11 @@ func main() {
 		Network:   "local",
 		LlmOptions: []llms.CallOption{
 			llms.WithStopWords(
-				[]string{
-					util.LoadEnv("STOP_WORD"),
-				},
+				projectConfig.StopWords,
 			),
 			llms.WithRepetitionPenalty(0.7),
 		},
 	}
-	projectConfig := project.GetProjectConfig(dirPath, config.LightCheck)
 
 	fileMap, err := summarizeService.SummarizeCode(projectConfig)
 	if err != nil {
@@ -67,7 +69,7 @@ func main() {
 	}
 	if config.WithFileSummary {
 		if err := writeFile(
-			filepath.Join(dirPath, "FILES.md"),
+			filepath.Join(workdir, "FILES.md"),
 			fileMapToMd(fileMap),
 		); err != nil {
 			log.Fatal(err)
@@ -90,7 +92,7 @@ func main() {
 					if slices.Contains(files, file) {
 						pkgFileMap[file] = content
 						if pkgDir == "" {
-							pkgDir = filepath.Join(dirPath, filepath.Dir(file))
+							pkgDir = filepath.Join(workdir, filepath.Dir(file))
 						}
 					}
 				}
@@ -128,7 +130,7 @@ func main() {
 			log.Fatal(err)
 		}
 		if err := writeFile(
-			filepath.Join(dirPath, "SUMMARY.md"), summaryContent); err != nil {
+			filepath.Join(workdir, "SUMMARY.md"), summaryContent); err != nil {
 			log.Fatal(err)
 		}
 
@@ -144,13 +146,13 @@ func main() {
 
 			readmeFilename := "README.md"
 			if !config.NoBackupRootReadme {
-				readmeFilename, err = getReadmePath(dirPath)
+				readmeFilename, err = getReadmePath(workdir)
 				if err != nil {
 					log.Fatal(err)
 				}
 			}
 			if err := writeFile(
-				filepath.Join(dirPath, readmeFilename), readmeContent); err != nil {
+				filepath.Join(workdir, readmeFilename), readmeContent); err != nil {
 				log.Fatal(err)
 			}
 		}
@@ -172,9 +174,9 @@ func fileMapToMd(fileMap map[string]string) string {
 	}
 	return strings.ReplaceAll(content, "\n", "  \n")
 }
-func getReadmePath(dirPath string) (string, error) {
+func getReadmePath(workdir string) (string, error) {
 	readmeFilename := "README_GENERATED.md"
-	if _, err := os.Stat(filepath.Join(dirPath, "README.md")); err != nil {
+	if _, err := os.Stat(filepath.Join(workdir, "README.md")); err != nil {
 		if os.IsNotExist(err) {
 			readmeFilename = "README.md"
 		} else {
@@ -196,11 +198,11 @@ func writeFile(path, content string) error {
 	return nil
 }
 
-func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error) {
-	dirPath := util.LoadEnv("PWD")
+func processWorkingDirectory(githubLink, githubUsername, githubToken string) (string, error) {
+	workdir := util.LoadEnv("PWD")
 
-	if ghLink != "" {
-		u, err := url.ParseRequestURI(ghLink)
+	if githubLink != "" {
+		u, err := url.ParseRequestURI(githubLink)
 		if err != nil {
 			return "", err
 		}
@@ -210,32 +212,32 @@ func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error)
 			return "", errors.New("github repository url does not have two path elements")
 		}
 
-		tempDirEl := []string{dirPath, "temp"}
+		tempDirEl := []string{workdir, "temp"}
 		tempDirEl = append(tempDirEl, sPath...)
 		tempDir := filepath.Join(tempDirEl...)
 
-		dirPath = tempDir
+		workdir = tempDir
 
-		if _, err := os.Stat(dirPath); err != nil {
+		if _, err := os.Stat(workdir); err != nil {
 			if os.IsNotExist(err) {
-				if err := os.MkdirAll(dirPath, os.FileMode(0755)); err != nil {
+				if err := os.MkdirAll(workdir, os.FileMode(0755)); err != nil {
 					return "", err
 				}
 
 				cloneOptions := git.CloneOptions{
-					URL:               ghLink,
+					URL:               githubLink,
 					RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 					Depth:             1,
 				}
-				if ghUsername != "" && ghToken != "" {
+				if githubUsername != "" && githubToken != "" {
 					cloneOptions.Auth = &http.BasicAuth{
-						Username: ghUsername,
-						Password: ghToken,
+						Username: githubUsername,
+						Password: githubToken,
 					}
 				}
 
-				if _, err := git.PlainClone(dirPath, false, &cloneOptions); err != nil {
-					if err := os.RemoveAll(dirPath); err != nil {
+				if _, err := git.PlainClone(workdir, false, &cloneOptions); err != nil {
+					if err := os.RemoveAll(workdir); err != nil {
 						return "", err
 					}
 					return "", err
@@ -246,20 +248,19 @@ func processWorkingDirectory(ghLink, ghUsername, ghToken string) (string, error)
 			}
 		}
 	} else if len(flag.Args()) > 0 {
-		dirPath = flag.Arg(0)
-		if _, err := os.Stat(dirPath); err != nil {
+		workdir = flag.Arg(0)
+		if _, err := os.Stat(workdir); err != nil {
 			return "", err
 		}
 	}
 
-	return dirPath, nil
+	return workdir, nil
 }
 
 func initConfig() (*Config, error) {
-	// Temporary moved to util.LoadEnv, until we move stop words to the toml files
-	// if err := godotenv.Load(); err != nil {
-	// 	return nil, err
-	// }
+	if err := godotenv.Load(); err != nil {
+		return nil, err
+	}
 
 	config := Config{}
 
