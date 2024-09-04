@@ -19,7 +19,6 @@ Reduct your output as much as possible.
 Don't lose original namings.
 Always specify environment variables, cli arguments, flags, anything that can configure application behaviour.
 Always omit empty sections! Write about section only if they present!
-Always omit already written external references!
 It is mandatory to prepend the ` + util.LoadEnv("STOP_WORD") + ` at the very end of your output.
 
 Example input:
@@ -59,6 +58,7 @@ func main() {
 
 Example output:
 package foobar
+import: fmt, os
 
 struct FooBar:
 	- Fields: Foo, Bar
@@ -75,7 +75,6 @@ func main():
 	- prints "boozbazZABraboff" which is reverse of above output
 
 environment variables: "PWD", "BAZ"
-external references: fmt.Println, os.Getenv
 ` + util.LoadEnv("STOP_WORD") + `
 
 Example input:
@@ -92,11 +91,10 @@ func main() {
 
 Example output:
 package main
+import: fmt
 
 func main():
 	- prints "Hello world!"
-
-external references: fmt.Println
 ` + util.LoadEnv("STOP_WORD") + `
 
 Provided code:

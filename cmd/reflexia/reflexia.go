@@ -21,14 +21,16 @@ import (
 )
 
 type Config struct {
-	GithubLink       *string
-	GithubUsername   *string
-	GithubToken      *string
-	LightCheck       bool
-	NoSummary        bool
-	NoReadme         bool
-	NoPackageSummary bool
-	WithFileSummary  bool
+	GithubLink              *string
+	GithubUsername          *string
+	GithubToken             *string
+	LightCheck              bool
+	NoSummary               bool
+	NoReadme                bool
+	NoPackageSummary        bool
+	NoBackupRootReadme      bool
+	WithFileSummary         bool
+	WithPackageReadmeBackup bool
 }
 
 func main() {
@@ -88,7 +90,7 @@ func main() {
 					if slices.Contains(files, file) {
 						pkgFileMap[file] = content
 						if pkgDir == "" {
-							pkgDir = filepath.Base(filepath.Dir(file))
+							pkgDir = filepath.Join(dirPath, filepath.Dir(file))
 						}
 					}
 				}
@@ -100,13 +102,15 @@ func main() {
 					log.Fatal(err)
 				}
 
-				dirPath = filepath.Join(dirPath, pkgDir)
-				readmeFilename, err := getReadmePath(dirPath)
-				if err != nil {
-					log.Fatal(err)
+				readmeFilename := "README.md"
+				if config.WithPackageReadmeBackup {
+					readmeFilename, err = getReadmePath(pkgDir)
+					if err != nil {
+						log.Fatal(err)
+					}
 				}
 				if err := writeFile(
-					filepath.Join(dirPath, readmeFilename),
+					filepath.Join(pkgDir, readmeFilename),
 					pkgSummaryContent,
 				); err != nil {
 					log.Fatal(err)
@@ -138,9 +142,12 @@ func main() {
 				log.Fatal(err)
 			}
 
-			readmeFilename, err := getReadmePath(dirPath)
-			if err != nil {
-				log.Fatal(err)
+			readmeFilename := "README.md"
+			if !config.NoBackupRootReadme {
+				readmeFilename, err = getReadmePath(dirPath)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			if err := writeFile(
 				filepath.Join(dirPath, readmeFilename), readmeContent); err != nil {
@@ -260,7 +267,9 @@ func initConfig() (*Config, error) {
 	config.NoSummary = false
 	config.NoReadme = false
 	config.NoPackageSummary = false
+	config.NoBackupRootReadme = false
 	config.WithFileSummary = false
+	config.WithPackageReadmeBackup = false
 
 	flag.BoolFunc("c",
 		"do not check project root folder specific files such as go.mod or package.json",
@@ -286,10 +295,22 @@ func initConfig() (*Config, error) {
 			config.NoPackageSummary = true
 			return nil
 		})
+	flag.BoolFunc("br",
+		"overwrite README.md for the root project directory instead of README_GENERATED.md creation",
+		func(_ string) error {
+			config.NoBackupRootReadme = true
+			return nil
+		})
 	flag.BoolFunc("f",
 		"Save individual file summary intermediate result to the FILES.md",
 		func(_ string) error {
 			config.WithFileSummary = true
+			return nil
+		})
+	flag.BoolFunc("bp",
+		"create README_GENERATED.md if README.md exists in the package directory instead of overwriting",
+		func(_ string) error {
+			config.WithPackageReadmeBackup = true
 			return nil
 		})
 
