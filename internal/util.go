@@ -3,7 +3,6 @@ package util
 import (
 	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 
 	ignore "github.com/crackcomm/go-gitignore"
@@ -39,12 +38,4 @@ func WalkDirIgnored(workdir, gitignorePath string, f WalkDirIgnoredFunction) err
 		return f(path, d)
 	})
 	return err
-}
-
-func LoadEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Fatalf("empty environment key %s", key)
-	}
-	return value
 }

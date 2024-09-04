@@ -3,10 +3,12 @@ project_root_filter = ["package.json"]
 module_match = "package_name"
 stop_words = ["<help_me_banana>"]
 code_prompt = """
-Describe each code symbol as in the examples below.
-Reduct your output as much as possible.
-Don't lose original namings.
-It is mandatory to mention any cli arguments, flags, env vars, config files, anything that can affect application behaviour (if they exists in the code).
+Your task is to describe the provided code in a similar template as in examples below.
+First you need to write the package name and collect all the imports.
+Then you need to collect and describe all the external data, input sources.
+Don't forget to describe cmdline arguments and flags if they present.
+You can create any section for that purpose if you need to.
+After that you need to describe each code symbol, reducting your output, but trying not to lose the details and original namings.
 It is mandatory to prepend the <help_me_banana> at the very end of your output.
 
 Example input:
@@ -26,7 +28,6 @@ struct FooBar {
 }
 
 func SomeFunc() {
-	// Unimplemented
 	// TODO: implement SomeFunc
 }
 
@@ -45,8 +46,9 @@ func main() {
 ```
 
 Example output:
-package foobar
-import: fmt, os
+package: foobar
+imports: fmt, os
+env: "PWD", "BAZ"
 
 struct FooBar:
 	- Fields: Foo, Bar
@@ -62,7 +64,6 @@ func main():
 	- prints foobar.Foo + foobar.Bar + environment variable "BAZ" + var zab + const zoob
 	- prints "boozbazZABraboff" which is reverse of above output
 
-environment variables: "PWD", "BAZ"
 <help_me_banana>
 
 Example input:
@@ -78,8 +79,8 @@ func main() {
 ```
 
 Example output:
-package main
-import: fmt
+package: main
+imports: fmt
 
 func main():
 	- prints "Hello world!"
@@ -90,10 +91,9 @@ Provided code:
 summary_prompt = """
 Based on provided input from summary of the project files create a markdown summary of what that project code does.
 First write a short summary about provided project code summary.
-Always specify which environment variables, flags, cmdline arguments, files can be used for configuration.
-Always specify the edgecases of how application can be launched.
+Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration.
+Always list and specify the edgecases of how application can be launched.
 Try to guess the project name from the filenames if possible and add it as the markdown header of the summary.
-Write out all file names as a project structure.
 Then write summary about every major code part, group it with the markdown subheaders.
 Try to explain relations between code entities, try to find unclear places, possibly dead code.		
 If unclear places or dead code are not present - don't write anything about their absense.
@@ -104,8 +104,8 @@ It is mandatory to prepend the <help_me_banana> at the very end of your output.
 package_prompt = """
 Based on provided input from the summary of project package files create a markdown summary of what that package code does.
 First write a short summary about provided project code summary.
-Always specify which environment variables, flags, cmdline arguments, files can be used for configuration.
-Always specify the edgecases of how application can be launched.
+Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration.
+Always list and specify the edgecases of how application can be launched.
 Try to guess package name from the file contents or file paths and add it as the markdown header of the summary.
 Write out all file names as a project package structure.
 Then write summary about every major code part, group it with the markdown subheaders.
@@ -119,6 +119,7 @@ readme_prompt = """
 Based on provided input from technical summary of the project create a README.md contents for that project.
 Try to guess the project name from filenames or other namings, if present.
 Include short project description, possible configuration and/or run instructions.
+Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration.
 Try to be clear, concise, and brief.
 It is mandatory to prepend the <help_me_banana> at the very end of your output.
 """

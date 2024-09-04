@@ -2,6 +2,7 @@ package project
 
 import (
 	"errors"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	util "reflexia/internal"
+	"strconv"
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
@@ -27,8 +29,10 @@ type ProjectConfig struct {
 	RootPath          string
 }
 
-func GetProjectConfig(currentDirectory string, lightCheck bool) (*ProjectConfig, error) {
-	var projectConfigs = []ProjectConfig{}
+func GetProjectConfig(
+	currentDirectory, withConfigFile string, lightCheck bool,
+) (*ProjectConfig, error) {
+	var projectConfigs = map[string]ProjectConfig{}
 
 	if err := util.WalkDirIgnored(
 		"project_config", filepath.Join(currentDirectory, ".gitignore"),
@@ -41,31 +45,68 @@ func GetProjectConfig(currentDirectory string, lightCheck bool) (*ProjectConfig,
 				if err != nil {
 					return err
 				}
-				var projectConfig ProjectConfig
-				if err = toml.Unmarshal(content, &projectConfig); err != nil {
+				var config ProjectConfig
+				if err = toml.Unmarshal(content, &config); err != nil {
 					return err
 				}
-				projectConfig.RootPath = currentDirectory
-				projectConfigs = append(projectConfigs, projectConfig)
+				config.RootPath = currentDirectory
+				projectConfigs[d.Name()] = config
 			}
 			return nil
 		}); err != nil {
 		return nil, err
 	}
 
-	for _, config := range projectConfigs {
+	if config, exists := projectConfigs[filepath.Base(withConfigFile)]; exists {
+		return &config, nil
+	}
+	var projectConfigVariants = map[string]*ProjectConfig{}
+	for filename, config := range projectConfigs {
 		if lightCheck && hasFilterFiles(currentDirectory, config.FileFilter) {
-			return &config, nil
+			projectConfigVariants[filename] = &config
 		}
 		if hasFilterFiles(currentDirectory, config.FileFilter) &&
 			hasRootFilterFile(currentDirectory, config.ProjectRootFilter) {
-			return &config, nil
+			projectConfigVariants[filename] = &config
 		}
 	}
 
-	return nil, errors.New(
-		"failed to detect project language, available languages: go, python, typescript",
-	)
+	switch len(projectConfigVariants) {
+	case 0:
+		return nil, errors.New(
+			"failed to detect project language, available languages: go, python, typescript",
+		)
+	case 1:
+		for _, config := range projectConfigVariants {
+			return config, nil
+		}
+	default:
+		var filenames []string
+		for filename, _ := range projectConfigVariants {
+			filenames = append(filenames, filename)
+		}
+		fmt.Println("Multiple project config matches found!")
+		for i, filename := range filenames {
+			fmt.Printf("%d. %v\n", i+1, filename)
+		}
+		fmt.Print("Enter the number or filename: ")
+		for {
+			var input string
+			if _, err := fmt.Scanln(&input); err != nil {
+				return nil, err
+			}
+			if index, err := strconv.Atoi(input); err == nil && index > 0 && index <= len(filenames) {
+				return projectConfigVariants[filenames[index-1]], nil
+			} else {
+				for filename, config := range projectConfigVariants {
+					if filename == input || strings.TrimSuffix(filename, ".toml") == input {
+						return config, nil
+					}
+				}
+			}
+		}
+	}
+	panic("unreachable")
 }
 
 func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {

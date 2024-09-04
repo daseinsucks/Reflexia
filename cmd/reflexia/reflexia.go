@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/url"
 	"os"
@@ -25,6 +26,7 @@ type Config struct {
 	GithubLink              *string
 	GithubUsername          *string
 	GithubToken             *string
+	WithConfigFile          *string
 	LightCheck              bool
 	NoSummary               bool
 	NoReadme                bool
@@ -46,14 +48,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	projectConfig, err := project.GetProjectConfig(workdir, config.LightCheck)
+	projectConfig, err := project.GetProjectConfig(
+		workdir, *config.WithConfigFile, config.LightCheck,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	summarizeService := &summarize.SummarizerService{
-		HelperURL: util.LoadEnv("HELPER_URL"),
-		Model:     util.LoadEnv("MODEL"),
-		ApiToken:  util.LoadEnv("API_TOKEN"),
+		HelperURL: loadEnv("HELPER_URL"),
+		Model:     loadEnv("MODEL"),
+		ApiToken:  loadEnv("API_TOKEN"),
 		Network:   "local",
 		LlmOptions: []llms.CallOption{
 			llms.WithStopWords(
@@ -98,7 +102,8 @@ func main() {
 				}
 
 				pkgSummaryContent, err := summarizeService.SummarizeRequest(
-					projectConfig.PackagePrompt, fileMapToString(pkgFileMap),
+					projectConfig.PackagePrompt,
+					fileMapToString(pkgFileMap),
 				)
 				if err != nil {
 					log.Fatal(err)
@@ -123,8 +128,13 @@ func main() {
 
 		fmt.Println("\nSummary: ")
 
+		projectStructure, err := getProjectStructure(workdir)
+		if err != nil {
+			log.Fatal(err)
+		}
 		summaryContent, err := summarizeService.SummarizeRequest(
-			projectConfig.SummaryPrompt, fileMapToString(fileMap),
+			projectConfig.SummaryPrompt,
+			fileMapToString(fileMap)+"\n\n"+projectStructure,
 		)
 		if err != nil {
 			log.Fatal(err)
@@ -138,7 +148,8 @@ func main() {
 			fmt.Println("\nReadme: ")
 
 			readmeContent, err := summarizeService.SummarizeRequest(
-				projectConfig.ReadmePrompt, summaryContent,
+				projectConfig.ReadmePrompt,
+				summaryContent,
 			)
 			if err != nil {
 				log.Fatal(err)
@@ -159,6 +170,32 @@ func main() {
 	}
 }
 
+func loadEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("empty environment key %s", key)
+	}
+	return value
+}
+
+func getProjectStructure(workdir string) (string, error) {
+	content := "project file structure:\n"
+	if err := util.WalkDirIgnored(workdir, filepath.Join(workdir, ".gitignore"), func(path string, d fs.DirEntry) error {
+		if d.IsDir() {
+			return nil
+		}
+		relPath, err := filepath.Rel(workdir, path)
+		if err != nil {
+			return err
+		}
+		content += "- " + relPath + "\n"
+		return nil
+	}); err != nil {
+		return "", err
+	}
+	return content, nil
+}
+
 func fileMapToString(fileMap map[string]string) string {
 	content := ""
 	for file, summary := range fileMap {
@@ -174,6 +211,7 @@ func fileMapToMd(fileMap map[string]string) string {
 	}
 	return strings.ReplaceAll(content, "\n", "  \n")
 }
+
 func getReadmePath(workdir string) (string, error) {
 	readmeFilename := "README_GENERATED.md"
 	if _, err := os.Stat(filepath.Join(workdir, "README.md")); err != nil {
@@ -199,7 +237,7 @@ func writeFile(path, content string) error {
 }
 
 func processWorkingDirectory(githubLink, githubUsername, githubToken string) (string, error) {
-	workdir := util.LoadEnv("PWD")
+	workdir := loadEnv("PWD")
 
 	if githubLink != "" {
 		u, err := url.ParseRequestURI(githubLink)
@@ -270,6 +308,8 @@ func initConfig() (*Config, error) {
 	githubToken := os.Getenv("GH_TOKEN")
 	config.GithubToken = &githubToken
 	flag.StringVar(config.GithubToken, "t", *config.GithubToken, "github token for ssh auth")
+
+	config.WithConfigFile = flag.String("l", "", "config filename in project_config to use")
 
 	config.LightCheck = false
 	config.NoSummary = false

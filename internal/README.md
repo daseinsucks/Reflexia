@@ -1,35 +1,35 @@
 # util
 
-This package provides utility functions for working with files and directories, including a function to walk through a directory and skip files that are ignored by a .gitignore file. It also includes a function to load environment variables.
+This package provides a utility function for walking through a directory tree and ignoring files based on a .gitignore file. It takes a working directory, a path to the .gitignore file, and a function to be called for each directory entry. The function will skip directories that match the .gitignore file and call the provided function for the remaining entries.
 
-## File Structure
+## Environment variables
 
-```
-internal/
-  util.go
-```
+None
 
-## Code Summary
+## Flags
 
-### WalkDirIgnored
+None
 
-This function takes a working directory, a path to a .gitignore file, and a function as arguments. It compiles the .gitignore file using the `ignore.CompileIgnoreFile` function. Then, it walks through the directory using `filepath.WalkDir`, skipping the .git directory. For each file or directory found, it calculates the relative path using `filepath.Rel` and checks if the path matches the .gitignore using `ignoreFile.MatchesPath`. If the path is not ignored, it calls the provided function with the path and the corresponding `fs.DirEntry`. Finally, it returns any error encountered during the process.
+## Cmdline arguments
 
-### LoadEnv
+None
 
-This function takes a key as an argument and returns the value of the environment variable with that key. If the key is empty, it logs a fatal error.
+## Files and their paths
 
-## Edge Cases
+- .gitignore file: path to the .gitignore file
 
-The application can be launched with the following environment variables:
+## Edge cases
 
-- key: The key of the environment variable to be loaded.
+- Launching the application with an empty .gitignore file will result in all files and directories being processed.
+- Launching the application with a non-existent .gitignore file will result in an error.
 
-The application can also be launched with the following command-line arguments:
+## Project package structure
 
-- -key: The key of the environment variable to be loaded.
+- internal/util.go
 
-The application can be configured using the following files:
+## Summary of major code parts
 
-- .gitignore: The file containing the list of files and directories to be ignored.
+### WalkDirIgnored function
+
+This function takes a working directory, a path to the .gitignore file, and a function to be called for each directory entry. It first compiles the .gitignore file using the ignore.CompileIgnoreFile function. Then, it iterates through the directory tree using filepath.WalkDir. For each entry, it checks if the entry is a directory and if its name is ".git". If it is, it skips the directory using filepath.SkipDir. It also calculates the relative path from the working directory to the current path using filepath.Rel. If the ignoreFile is not nil and it matches the relative path, it skips the directory if the entry is a directory, otherwise it returns nil. Finally, it calls the provided function f(path, d) with the current path and directory entry.
 

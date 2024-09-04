@@ -1,63 +1,57 @@
 # Reflexia
 
-This project is a code summarizer that takes a Go project as input and generates summaries for each file, package, and the entire project. It uses a combination of environment variables, command-line arguments, and configuration files to determine the behavior and output of the summarizer.
+This project is a code summarizer that can be used to generate summaries of code files in a project. It uses a combination of command-line arguments, environment variables, and configuration files to determine how to process the code. The project also includes a helper service that can be used to generate summaries of code snippets.
 
-Project Structure:
-- pkg/project/project.go
-- pkg/summarize/summarize.go
-- cmd/reflexia/reflexia.go
-- internal/util.go
+## Project Configuration
 
-Summary of Code Parts:
+The project uses a configuration file to specify the settings for the summarizer. The configuration file can be specified using the `-l` flag. The configuration file can be in TOML format and contains the following fields:
 
-1. Project Configuration (pkg/project/project.go):
-   - The `ProjectConfig` struct defines the configuration for the summarizer, including file filters, project root filters, module match, stop words, and prompts for code, summary, package, readme, and root path.
-   - The `GetProjectConfig` function walks through all .toml files in the current directory and its subdirectories to find the first matching ProjectConfig.
-   - The `BuildPackageFiles` function builds a map of package names to a list of file paths based on the ModuleMatch field of the ProjectConfig.
+- FileFilter: A list of file extensions to include in the summarization process.
+- ProjectRootFilter: A list of file extensions to exclude from the summarization process.
+- ModuleMatch: A regular expression to match module names.
+- StopWords: A list of words to ignore during summarization.
+- CodePrompt: A prompt to use when generating summaries of code snippets.
+- SummaryPrompt: A prompt to use when generating summaries of text.
+- PackagePrompt: A prompt to use when generating summaries of package-level code.
+- ReadmePrompt: A prompt to use when generating summaries of README files.
+- RootPath: The root directory of the project.
 
-2. Summarization Service (pkg/summarize/summarize.go):
-   - The `SummarizerService` struct contains fields for helper URL, model, API token, network, and LLM options.
-   - The `CodeSummaryRequest` and `SummarizeRequest` functions take prompt and content as input and call helper.GenerateContentInstruction to generate a response.
-   - The `SummarizeCode` function takes a projectConfig as input, walks through the project directory, and calls `CodeSummaryRequest` to generate summaries for each file.
+## Summarization Process
 
-3. Main Application (cmd/reflexia/reflexia.go):
-   - The `Config` struct defines the configuration for the main application, including GitHub link, username, token, light check, no summary, no readme, no package summary, no backup root readme, with file summary, and with package readme backup.
-   - The `main` function initializes the config, gets the workdir, calls `summarizeService.SummarizeCode` to get fileMap, and writes the fileMap to FILES.md if WithFileSummary is true.
-   - It also calls `summarizeService.SummarizeRequest` to get pkgSummaryContent for each package and write it to the appropriate README.md file.
+The summarization process begins by reading the configuration file and parsing the settings. The project then iterates through the files in the project directory, excluding any files specified in the `.gitignore` file. For each file, it checks if it matches any of the file filters specified in the configuration file. If a match is found, the file content is read, and a summary is generated using the appropriate prompt from the configuration file. The summaries are then stored in a map, where the key is the relative path to the file, and the value is the generated summary.
 
-4. Utility Functions (internal/util.go):
-   - The `WalkDirIgnored` function takes a workdir, gitignorePath, and f as arguments, compiles the .gitignore file, walks through the directory, and calls f with the path and fs.DirEntry if not ignored.
-   - The `LoadEnv` function takes a key as argument and returns the value of the environment variable with the key.
+## Output
 
-Edge Cases:
+The project generates several output files:
 
-- If no matching ProjectConfig is found, the summarizer will return an error.
-- If no GitHub link is provided, the summarizer will use the first command-line argument as the workdir.
-- If the .gitignore file is not found, the summarizer will not ignore any files.
+- `FILES.md`: A markdown file containing the summaries of all files in the project.
+- `README.md`: A markdown file containing the summaries of all README files in the project.
+- `SUMMARY.md`: A markdown file containing the summaries of all files in the project.
 
-Environment Variables:
+The project also has the option to create a README file for each package in the project, as well as to overwrite the existing README file in the root project directory.
 
-- PWD: current working directory
-- HELPER_URL: helper URL
-- MODEL: model
-- API_TOKEN: API token
+## Edge Cases
 
-Config Files:
+The project has several edge cases that can be handled using command-line arguments:
 
-- project_config/*.toml
-- .env
-- .gitignore
+- `-c`: Do not check project root folder specific files such as go.mod or package.json.
+- `-s`: Do not create SUMMARY.md and README.md, just print the file summaries.
+- `-r`: Do not create README.md.
+- `-p`: Do not create README.md for every package in the project.
+- `-br`: Overwrite README.md for the root project directory instead of creating README_GENERATED.md.
+- `-f`: Save individual file summary intermediate result to the FILES.md.
+- `-bp`: Create README_GENERATED.md if README.md exists in the package directory instead of overwriting.
 
-CLI Arguments:
+## Environment Variables
 
-- -g, --github-link: valid link for github repository
-- -u, --github-username: github username for ssh auth
-- -t, --github-token: github token for ssh auth
-- -c: do not check project root folder specific files such as go.mod or package.json
-- -s: do not create SUMMARY.md and README.md, just print the file summaries
-- -r: do not create README.md
-- -p: do not create README.md for every package in the project
-- -br: overwrite README.md for the root project directory instead of README_GENERATED.md creation
-- -f: Save individual file summary intermediate result to the FILES.md
-- -bp: create README_GENERATED.md if README.md exists in the package directory instead of overwriting
+The project uses the following environment variables:
+
+- `PWD`: Current working directory.
+- `HELPER_URL`: Helper URL.
+- `MODEL`: Model.
+- `API_TOKEN`: API token.
+
+## Conclusion
+
+The Reflexia project provides a comprehensive solution for summarizing code files in a project. It uses a combination of configuration files, command-line arguments, and environment variables to provide flexibility and control over the summarization process. The project also includes a helper service that can be used to generate summaries of code snippets, making it a valuable tool for developers and other stakeholders who need to understand the codebase quickly and efficiently.
 
