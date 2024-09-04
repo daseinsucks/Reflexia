@@ -168,11 +168,9 @@ func fileMapToString(fileMap map[string]string) string {
 func fileMapToMd(fileMap map[string]string) string {
 	content := ""
 	for file, summary := range fileMap {
-		content += "#" + file + "\n"
-		summaryNLEscaped := strings.ReplaceAll(summary, "\n", "\n  ")
-		content += summaryNLEscaped + "\n\n"
+		content += "# " + file + "\n" + summary + "\n\n"
 	}
-	return content
+	return strings.ReplaceAll(content, "\n", "  \n")
 }
 func getReadmePath(dirPath string) (string, error) {
 	readmeFilename := "README_GENERATED.md"
