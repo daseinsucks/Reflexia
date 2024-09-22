@@ -46,7 +46,6 @@ The project has several edge cases that can be handled using command-line argume
 
 The project uses the following environment variables:
 
-- `PWD`: Current working directory.
 - `HELPER_URL`: Helper URL.
 - `MODEL`: Model.
 - `API_TOKEN`: API token.
@@ -63,5 +62,12 @@ The project uses the following environment variables:
 reflexia -l config.toml -c -s -r -p -br -f -bp
 ```
 
+
+
 This command will run the Reflexia project using the configuration file `config.toml`, exclude project root folder specific files, not create SUMMARY.md and README.md, not create README.md for every package in the project, overwrite README.md for the root project directory instead of creating README_GENERATED.md, save individual file summary intermediate result to the FILES.md, and create README_GENERATED.md if README.md exists in the package directory instead of overwriting.
 
+
+```bash
+./reflexia -l go.toml -f -bp -g https://github.com/JackBekket/Hellper
+```
+This command will start to autodocumentize -g repository (public), it will create README_GENERATED.MD and create summary for all files
