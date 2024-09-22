@@ -67,6 +67,7 @@ func main() {
 		},
 	}
 
+	// Generates summary for a file content
 	fileMap, err := summarizeService.SummarizeCode(projectConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -101,6 +102,7 @@ func main() {
 					}
 				}
 
+				// Generate Summary for a package (summarizing and group file summarization by package name)
 				pkgSummaryContent, err := summarizeService.SummarizeRequest(
 					projectConfig.PackagePrompt,
 					fileMapToString(pkgFileMap),
@@ -132,6 +134,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Generate summary for a whole project (this will be deprecated)
 		summaryContent, err := summarizeService.SummarizeRequest(
 			projectConfig.SummaryPrompt,
 			fileMapToString(fileMap)+"\n\n"+projectStructure,
@@ -147,6 +151,7 @@ func main() {
 		if !config.NoReadme {
 			fmt.Println("\nReadme: ")
 
+			// Generating README based on summary content (this will be reworked)
 			readmeContent, err := summarizeService.SummarizeRequest(
 				projectConfig.ReadmePrompt,
 				summaryContent,

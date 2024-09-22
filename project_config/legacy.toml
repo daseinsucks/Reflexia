@@ -2,7 +2,6 @@ file_filter = [".go"]
 project_root_filter = ["go.mod"]
 module_match = "package_name"
 stop_words = ["<end_of_output>"]
-# this prompt is called first and go through files content. This prompt is called separately for each file content.
 code_prompt = """
 Your task is to describe the provided code.
 First you need to write the package name and collect all the imports.
@@ -48,13 +47,11 @@ Try to be clear, concise, and brief.
 The main goal is to summarize the logic of the whole project.
 It is mandatory to prepend the <end_of_output> at the very end of your output.
 """
-
-# this prompt takes all content generated to files and maka a summary for a package, therefore group code generatation output by package name. It is second call from main loop
 package_prompt = """
 Based on provided input from the summary of project package files create a markdown summary of what that package code does.
 First write a short summary about provided project code summary.
-Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration if they present.
-Always list and specify the edgecases of how application can be launched if it is cmd/cli/main package.
+Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration.
+Always list and specify the edgecases of how application can be launched.
 Try to guess package name from the file contents or file paths and add it as the markdown header of the summary.
 Write out all file names as a project package structure.
 Then write summary about every major code part, group it with the markdown subheaders.
@@ -64,4 +61,11 @@ Try to be clear, concise, and brief.
 The main goal is to summarize the logic of the whole package.
 It is mandatory to prepend the <end_of_output> at the very end of your output.
 """
-
+readme_prompt = """
+Based on provided input from technical summary of the project create a README.md contents for that project.
+Try to guess the project name from filenames or other namings, if present.
+Include short project description, possible configuration and/or run instructions.
+Always list and specify environment variables, flags, cmdline arguments, files and their paths that can be used for configuration.
+Try to be clear, concise, and brief.
+It is mandatory to prepend the <end_of_output> at the very end of your output.
+"""
