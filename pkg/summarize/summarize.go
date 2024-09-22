@@ -41,6 +41,7 @@ func (s *SummarizerService) SummarizeRequest(prompt, content string) (string, er
 	return response, err
 }
 
+// This function is summarizing code of files and create map fileMap[relPath] = generation_content
 func (s *SummarizerService) SummarizeCode(
 	projectConfig *project.ProjectConfig,
 ) (map[string]string, error) {
@@ -64,7 +65,7 @@ func (s *SummarizerService) SummarizeCode(
 					fmt.Println(relPath)
 					// We are doing print stuff since the llm library prints results to the console
 					response, err := s.CodeSummaryRequest(
-						projectConfig.CodePrompt, string(content))
+						projectConfig.CodeSummaryPrompt, string(content))
 					fmt.Printf("\n")
 					fileMap[relPath] = response
 					if err != nil {
