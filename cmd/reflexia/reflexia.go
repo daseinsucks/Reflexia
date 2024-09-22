@@ -67,10 +67,21 @@ func main() {
 		},
 	}
 
+	/*
+		projectStructure, err := getProjectStructure(workdir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(projectStructure)
+	*/
+
+	// Generates summary for a file content
+	// return the map of fileMap[relPath] = generation_content
 	fileMap, err := summarizeService.SummarizeCode(projectConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if config.WithFileSummary {
 		if err := writeFile(
 			filepath.Join(workdir, "FILES.md"),
@@ -87,6 +98,7 @@ func main() {
 				log.Fatal(err)
 			}
 
+			//
 			for pkg, files := range pkgFiles {
 				fmt.Printf("\n%s:\n", pkg)
 
@@ -98,9 +110,27 @@ func main() {
 						if pkgDir == "" {
 							pkgDir = filepath.Join(workdir, filepath.Dir(file))
 						}
+						readmeFilename, err := getReadmePath(pkgDir)
+						if err != nil {
+							log.Fatal(err)
+						}
+						if err := writeFile(
+							filepath.Join(pkgDir, readmeFilename),
+							content,
+						); err != nil {
+							log.Fatal(err)
+						}
 					}
 				}
 
+				projectStructure, err := getProjectStructure(pkgDir)
+				if err != nil {
+					log.Print(err)
+				}
+				fmt.Println(projectStructure)
+
+				// Generate Summary for a package (summarizing and group file summarization by package name)
+				// Get whole map of code summaries as a string and toss it to summarize .MD for a package
 				pkgSummaryContent, err := summarizeService.SummarizeRequest(
 					projectConfig.PackagePrompt,
 					fileMapToString(pkgFileMap),
@@ -108,6 +138,9 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
+
+				fmt.Println("\nSummary for a package: ")
+				fmt.Println(pkgSummaryContent)
 
 				readmeFilename := "README.md"
 				if config.WithPackageReadmeBackup {
@@ -126,47 +159,59 @@ func main() {
 			}
 		}
 
-		fmt.Println("\nSummary: ")
+		//fmt.Println("\nSummary: ")
+		/*
+			projectStructure, err := getProjectStructure(workdir)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(projectStructure)
+		*/
 
-		projectStructure, err := getProjectStructure(workdir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		summaryContent, err := summarizeService.SummarizeRequest(
-			projectConfig.SummaryPrompt,
-			fileMapToString(fileMap)+"\n\n"+projectStructure,
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := writeFile(
-			filepath.Join(workdir, "SUMMARY.md"), summaryContent); err != nil {
-			log.Fatal(err)
-		}
-
-		if !config.NoReadme {
-			fmt.Println("\nReadme: ")
-
-			readmeContent, err := summarizeService.SummarizeRequest(
-				projectConfig.ReadmePrompt,
-				summaryContent,
+		/*
+			// Generate summary for a whole project (this will be deprecated)
+			summaryContent, err := summarizeService.SummarizeRequest(
+				projectConfig.SummaryPrompt,
+				fileMapToString(fileMap)+"\n\n"+projectStructure,
 			)
 			if err != nil {
 				log.Fatal(err)
 			}
+			if err := writeFile(
+				filepath.Join(workdir, "SUMMARY.md"), summaryContent); err != nil {
+				log.Fatal(err)
+			}
+		*/
 
-			readmeFilename := "README.md"
-			if !config.NoBackupRootReadme {
-				readmeFilename, err = getReadmePath(workdir)
+		/*
+			if !config.NoReadme {
+				fmt.Println("\nReadme: ")
+
+
+				// Generating README based on summary content (this will be reworked)
+				readmeContent, err := summarizeService.SummarizeRequest(
+					projectConfig.ReadmePrompt,
+					summaryContent,
+				)
 				if err != nil {
 					log.Fatal(err)
 				}
+
+
+				readmeFilename := "README.md"
+				if !config.NoBackupRootReadme {
+					readmeFilename, err = getReadmePath(workdir)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+				if err := writeFile(
+					filepath.Join(workdir, readmeFilename), readmeContent); err != nil {
+					log.Fatal(err)
+				}
 			}
-			if err := writeFile(
-				filepath.Join(workdir, readmeFilename), readmeContent); err != nil {
-				log.Fatal(err)
-			}
-		}
+		*/
+
 	}
 }
 

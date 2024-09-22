@@ -23,6 +23,8 @@ type ProjectConfig struct {
 	ModuleMatch       string   `toml:"module_match"`
 	StopWords         []string `toml:"stop_words"`
 	CodePrompt        string   `toml:"code_prompt"`
+	ExplainPrompt     string   `toml:"explain_code_prompt"`
+	CodeSummaryPrompt string   `toml:"code_summary_prompt"`
 	SummaryPrompt     string   `toml:"summary_prompt"`
 	PackagePrompt     string   `toml:"package_prompt"`
 	ReadmePrompt      string   `toml:"readme_prompt"`
