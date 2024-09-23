@@ -5,9 +5,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	util "reflexia/internal"
-	"reflexia/pkg/project"
 	"strings"
+
+	util "github.com/JackBekket/reflexia/internal"
+	"github.com/JackBekket/reflexia/pkg/project"
 
 	helper "github.com/JackBekket/hellper/lib/langchain"
 	"github.com/tmc/langchaingo/llms"

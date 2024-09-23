@@ -17,9 +17,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms"
 
-	util "reflexia/internal"
-	"reflexia/pkg/project"
-	"reflexia/pkg/summarize"
+	util "github.com/JackBekket/reflexia/internal"
+	"github.com/JackBekket/reflexia/pkg/project"
+	"github.com/JackBekket/reflexia/pkg/summarize"
 )
 
 type Config struct {

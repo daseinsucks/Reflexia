@@ -10,9 +10,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	util "reflexia/internal"
 	"strconv"
 	"strings"
+
+	util "github.com/JackBekket/reflexia/internal"
 
 	"github.com/pelletier/go-toml/v2"
 )
