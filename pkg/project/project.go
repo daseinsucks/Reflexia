@@ -206,9 +206,10 @@ func hasRootFilterFile(workdir string, filters []string) bool {
 			if !os.IsNotExist(err) {
 				panic(err)
 			}
-			return false
+		} else {
+			return true
 		}
 	}
 
-	return true
+	return false
 }

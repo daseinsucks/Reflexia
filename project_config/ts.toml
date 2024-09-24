@@ -1,6 +1,6 @@
 file_filter = [".ts", ".d.ts", ".tsx"]
 project_root_filter = ["package.json"]
-module_match = "package_name"
+module_match = "directory"
 stop_words = ["<end_of_output>"]
 # this prompt is called first and go through files content. This prompt is called separately for each file content.
 #

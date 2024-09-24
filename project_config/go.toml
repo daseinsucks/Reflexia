@@ -1,5 +1,5 @@
 file_filter = [".go"]
-project_root_filter = ["go.mod"]
+project_root_filter = ["go.mod", "src/go.mod"]
 module_match = "package_name"
 stop_words = ["<end_of_output>"]
 # this prompt is called first and go through files content. This prompt is called separately for each file content.

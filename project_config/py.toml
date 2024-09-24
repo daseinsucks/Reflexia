@@ -1,6 +1,6 @@
 file_filter = [".py"]
-project_root_filter = ["pyproject.toml"] # TODO: bug, ["requirements.txt","pyproject.toml"] cannot determine python lang
-module_match = "package_name"
+project_root_filter = ["requirements.txt", "pyproject.toml"]
+module_match = "directory"
 stop_words = ["<end_of_output>"]
 # this prompt is called first and go through files content. This prompt is called separately for each file content.
 #

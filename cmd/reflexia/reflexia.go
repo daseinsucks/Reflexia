@@ -98,7 +98,6 @@ func main() {
 				log.Fatal(err)
 			}
 
-			//
 			for pkg, files := range pkgFiles {
 				fmt.Printf("\n%s:\n", pkg)
 
