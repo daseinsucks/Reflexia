@@ -26,3 +26,6 @@ go.work.sum
 
 # temp directory for clonned repositories
 temp
+
+# default cache path
+.reflexia_cache

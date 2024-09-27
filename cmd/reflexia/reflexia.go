@@ -23,17 +23,15 @@ import (
 )
 
 type Config struct {
-	GithubLink              *string
-	GithubUsername          *string
-	GithubToken             *string
-	WithConfigFile          *string
-	LightCheck              bool
-	NoSummary               bool
-	NoReadme                bool
-	NoPackageSummary        bool
-	NoBackupRootReadme      bool
-	WithFileSummary         bool
-	WithPackageReadmeBackup bool
+	GithubLink      *string
+	GithubUsername  *string
+	GithubToken     *string
+	WithConfigFile  *string
+	LightCheck      bool
+	WithFileSummary bool
+	OverwriteReadme bool
+	OverwriteCache  bool
+	CachePath       *string
 }
 
 func main() {
@@ -65,15 +63,9 @@ func main() {
 			),
 			llms.WithRepetitionPenalty(0.7),
 		},
+		OverwriteCache: config.OverwriteCache,
+		CachePath:      *config.CachePath,
 	}
-
-	/*
-		projectStructure, err := getProjectStructure(workdir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(projectStructure)
-	*/
 
 	// Generates summary for a file content
 	// return the map of fileMap[relPath] = generation_content
@@ -82,134 +74,69 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if config.WithFileSummary {
+	pkgFiles, err := projectConfig.BuildPackageFiles()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for pkg, files := range pkgFiles {
+		fmt.Printf("\n%s:\n", pkg)
+
+		pkgFileMap := map[string]string{}
+		pkgDir := ""
+		for file, content := range fileMap {
+			if slices.Contains(files, file) {
+				if pkgDir == "" {
+					pkgDir = filepath.Join(workdir, filepath.Dir(file))
+				}
+				pkgFileMap[file] = content
+			}
+		}
+		if pkgDir == "" {
+			log.Println("There is no mathcing files for pkg: ", pkg)
+			continue
+		}
+
+		projectStructure, err := getDirFileStructure(pkgDir)
+		if err != nil {
+			log.Print(err)
+		}
+		fmt.Println(projectStructure)
+
+		// Generate Summary for a package (summarizing and group file summarization by package name)
+		// Get whole map of code summaries as a string and toss it to summarize .MD for a package
+		pkgSummaryContent, err := summarizeService.SummarizeRequest(
+			projectConfig.PackagePrompt,
+			fileMapToString(pkgFileMap),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("\nSummary for a package: ")
+		fmt.Println(pkgSummaryContent)
+
+		readmeFilename := "README.md"
+		if !config.OverwriteReadme {
+			readmeFilename, err = getReadmePath(pkgDir)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		if err := writeFile(
-			filepath.Join(workdir, "FILES.md"),
-			fileMapToMd(fileMap),
+			filepath.Join(pkgDir, readmeFilename),
+			pkgSummaryContent,
 		); err != nil {
 			log.Fatal(err)
 		}
-	}
 
-	if !config.NoSummary {
-		if !config.NoPackageSummary {
-			pkgFiles, err := projectConfig.BuildPackageFiles()
-			if err != nil {
+		if config.WithFileSummary {
+			if err := writeFile(
+				filepath.Join(pkgDir, "FILES.md"),
+				fileMapToMd(pkgFileMap),
+			); err != nil {
 				log.Fatal(err)
-			}
-
-			for pkg, files := range pkgFiles {
-				fmt.Printf("\n%s:\n", pkg)
-
-				pkgFileMap := map[string]string{}
-				pkgDir := ""
-				for file, content := range fileMap {
-					if slices.Contains(files, file) {
-						pkgFileMap[file] = content
-						if pkgDir == "" {
-							pkgDir = filepath.Join(workdir, filepath.Dir(file))
-						}
-						readmeFilename, err := getReadmePath(pkgDir)
-						if err != nil {
-							log.Fatal(err)
-						}
-						if err := writeFile(
-							filepath.Join(pkgDir, readmeFilename),
-							content,
-						); err != nil {
-							log.Fatal(err)
-						}
-					}
-				}
-
-				projectStructure, err := getProjectStructure(pkgDir)
-				if err != nil {
-					log.Print(err)
-				}
-				fmt.Println(projectStructure)
-
-				// Generate Summary for a package (summarizing and group file summarization by package name)
-				// Get whole map of code summaries as a string and toss it to summarize .MD for a package
-				pkgSummaryContent, err := summarizeService.SummarizeRequest(
-					projectConfig.PackagePrompt,
-					fileMapToString(pkgFileMap),
-				)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				fmt.Println("\nSummary for a package: ")
-				fmt.Println(pkgSummaryContent)
-
-				readmeFilename := "README.md"
-				if config.WithPackageReadmeBackup {
-					readmeFilename, err = getReadmePath(pkgDir)
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-				if err := writeFile(
-					filepath.Join(pkgDir, readmeFilename),
-					pkgSummaryContent,
-				); err != nil {
-					log.Fatal(err)
-				}
-
 			}
 		}
-
-		//fmt.Println("\nSummary: ")
-		/*
-			projectStructure, err := getProjectStructure(workdir)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println(projectStructure)
-		*/
-
-		/*
-			// Generate summary for a whole project (this will be deprecated)
-			summaryContent, err := summarizeService.SummarizeRequest(
-				projectConfig.SummaryPrompt,
-				fileMapToString(fileMap)+"\n\n"+projectStructure,
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if err := writeFile(
-				filepath.Join(workdir, "SUMMARY.md"), summaryContent); err != nil {
-				log.Fatal(err)
-			}
-		*/
-
-		/*
-			if !config.NoReadme {
-				fmt.Println("\nReadme: ")
-
-
-				// Generating README based on summary content (this will be reworked)
-				readmeContent, err := summarizeService.SummarizeRequest(
-					projectConfig.ReadmePrompt,
-					summaryContent,
-				)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-
-				readmeFilename := "README.md"
-				if !config.NoBackupRootReadme {
-					readmeFilename, err = getReadmePath(workdir)
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-				if err := writeFile(
-					filepath.Join(workdir, readmeFilename), readmeContent); err != nil {
-					log.Fatal(err)
-				}
-			}
-		*/
 
 	}
 }
@@ -222,9 +149,9 @@ func loadEnv(key string) string {
 	return value
 }
 
-func getProjectStructure(workdir string) (string, error) {
-	content := "project file structure:\n"
-	if err := util.WalkDirIgnored(workdir, filepath.Join(workdir, ".gitignore"), func(path string, d fs.DirEntry) error {
+func getDirFileStructure(workdir string) (string, error) {
+	content := fmt.Sprintf("%s directory file structure:\n", filepath.Base(workdir))
+	if err := util.WalkDirIgnored(workdir, "", func(path string, d fs.DirEntry) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -355,42 +282,23 @@ func initConfig() (*Config, error) {
 
 	config.WithConfigFile = flag.String("l", "", "config filename in project_config to use")
 
+	cachePath := os.Getenv("CACHE_PATH")
+	config.CachePath = &cachePath
+	flag.StringVar(config.CachePath, "a", *config.CachePath, "cache folder path (defaults to .reflexia_cache)")
+	if *config.CachePath == "" {
+		cachePath = ".reflexia_cache"
+		config.CachePath = &cachePath
+	}
+
 	config.LightCheck = false
-	config.NoSummary = false
-	config.NoReadme = false
-	config.NoPackageSummary = false
-	config.NoBackupRootReadme = false
 	config.WithFileSummary = false
-	config.WithPackageReadmeBackup = false
+	config.OverwriteReadme = false
+	config.OverwriteCache = false
 
 	flag.BoolFunc("c",
 		"do not check project root folder specific files such as go.mod or package.json",
 		func(_ string) error {
 			config.LightCheck = true
-			return nil
-		})
-	flag.BoolFunc("s",
-		"do not create SUMMARY.md and README.md, just print the file summaries",
-		func(_ string) error {
-			config.NoSummary = true
-			return nil
-		})
-	flag.BoolFunc("r",
-		"do not create README.md",
-		func(_ string) error {
-			config.NoReadme = true
-			return nil
-		})
-	flag.BoolFunc("p",
-		"do not create README.md for every package in the project",
-		func(_ string) error {
-			config.NoPackageSummary = true
-			return nil
-		})
-	flag.BoolFunc("br",
-		"overwrite README.md for the root project directory instead of README_GENERATED.md creation",
-		func(_ string) error {
-			config.NoBackupRootReadme = true
 			return nil
 		})
 	flag.BoolFunc("f",
@@ -399,10 +307,16 @@ func initConfig() (*Config, error) {
 			config.WithFileSummary = true
 			return nil
 		})
-	flag.BoolFunc("bp",
-		"create README_GENERATED.md if README.md exists in the package directory instead of overwriting",
+	flag.BoolFunc("r",
+		"overwrite README.md instead of README_GENERATED.md creation/overwrite",
 		func(_ string) error {
-			config.WithPackageReadmeBackup = true
+			config.OverwriteReadme = true
+			return nil
+		})
+	flag.BoolFunc("d",
+		"Overwrite generated summary caches",
+		func(_ string) error {
+			config.OverwriteCache = true
 			return nil
 		})
 

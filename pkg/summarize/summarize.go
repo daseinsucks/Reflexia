@@ -1,6 +1,7 @@
 package summarize
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -15,11 +16,13 @@ import (
 )
 
 type SummarizerService struct {
-	HelperURL  string
-	Model      string
-	ApiToken   string
-	Network    string
-	LlmOptions []llms.CallOption
+	HelperURL      string
+	Model          string
+	ApiToken       string
+	Network        string
+	LlmOptions     []llms.CallOption
+	OverwriteCache bool
+	CachePath      string
 }
 
 func (s *SummarizerService) CodeSummaryRequest(prompt, content string) (string, error) {
@@ -48,6 +51,19 @@ func (s *SummarizerService) SummarizeCode(
 ) (map[string]string, error) {
 
 	fileMap := map[string]string{}
+	cacheFileMap := map[string]string{}
+	if !s.OverwriteCache {
+		hash, err := projectConfig.ProjectHash()
+		if err != nil {
+			return map[string]string{}, err
+		}
+		err = project.LoadCacheFileMap(filepath.Join(s.CachePath, hash), cacheFileMap)
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return map[string]string{}, err
+			}
+		}
+	}
 
 	if err := util.WalkDirIgnored(
 		projectConfig.RootPath,
@@ -64,14 +80,30 @@ func (s *SummarizerService) SummarizeCode(
 						return err
 					}
 					fmt.Println(relPath)
-					// We are doing print stuff since the llm library prints results to the console
-					response, err := s.CodeSummaryRequest(
-						projectConfig.CodeSummaryPrompt, string(content))
+
+					response := cacheFileMap[relPath]
+					if response == "" {
+						response, err = s.CodeSummaryRequest(
+							projectConfig.CodeSummaryPrompt, string(content))
+						if err != nil {
+							return err
+						}
+					} else {
+						fmt.Println("Using cached result:\n", response)
+					}
+
 					fmt.Printf("\n")
 					fileMap[relPath] = response
+
+					hash, err := projectConfig.ProjectHash()
 					if err != nil {
 						return err
 					}
+					err = project.SaveCacheFileMap(filepath.Join(s.CachePath, hash), fileMap)
+					if err != nil {
+						return err
+					}
+
 					break
 				}
 			}

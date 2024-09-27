@@ -11,9 +11,13 @@ import (
 type WalkDirIgnoredFunction func(path string, d fs.DirEntry) error
 
 func WalkDirIgnored(workdir, gitignorePath string, f WalkDirIgnoredFunction) error {
-	ignoreFile, err := ignore.CompileIgnoreFile(gitignorePath)
-	if err != nil {
-		log.Printf("failed to load .gitignore file %v", err)
+	var ignoreFile *ignore.GitIgnore
+	var err error
+	if gitignorePath != "" {
+		ignoreFile, err = ignore.CompileIgnoreFile(gitignorePath)
+		if err != nil {
+			log.Printf("failed to load .gitignore file %v", err)
+		}
 	}
 	err = filepath.WalkDir(workdir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

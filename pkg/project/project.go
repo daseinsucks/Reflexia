@@ -1,6 +1,8 @@
 package project
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"go/parser"
@@ -10,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -110,6 +113,32 @@ func GetProjectConfig(
 		}
 	}
 	panic("unreachable")
+}
+
+func (pc *ProjectConfig) ProjectHash() (string, error) {
+	hash := sha256.New()
+
+	v := reflect.ValueOf(*pc)
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := field.Type()
+
+		if fieldType.Kind() == reflect.String {
+			if _, err := hash.Write([]byte(field.String())); err != nil {
+				return "", err
+			}
+		}
+
+		if fieldType.Kind() == reflect.Slice && fieldType.Elem().Kind() == reflect.String {
+			joinedStrings := strings.Join(field.Interface().([]string), "")
+			if _, err := hash.Write([]byte(joinedStrings)); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	hashBytes := hash.Sum(nil)
+	return hex.EncodeToString(hashBytes), nil
 }
 
 func (pc *ProjectConfig) BuildPackageFiles() (map[string][]string, error) {
